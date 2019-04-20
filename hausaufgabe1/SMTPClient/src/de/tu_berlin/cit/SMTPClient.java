@@ -497,21 +497,28 @@ public class SMTPClient {
 				System.out.println(key.readyOps());*/
 				
 				try {
-					
+					// new connect established succesfully
 					if(key.isConnectable())
 					{
 						SocketChannel channel = (SocketChannel) key.channel();
+						// tell the chaneel that it can connect now
 						channel.finishConnect();
+						// intilaize the cöient with a state
 						SMTPClientState state = new SMTPClientState();
+						// generate random mail 
 						generateMail(state);
+						// attach the actual state to the  connection selcector key 
 						key.attach(state);
 					}
 					
+					// if got a massage in the buffer
 					if(key.isReadable())
 					{
+
+						// find out which state now
 						SMTPClientState state = (SMTPClientState) key.attachment();
 						SocketChannel channel = (SocketChannel) key.channel();
-						
+						//Extracts a response fro  channel and writes it into a byte buffer
 						if(!readCommandLine(channel, state.getByteBuffer()))
 							continue;
 						
