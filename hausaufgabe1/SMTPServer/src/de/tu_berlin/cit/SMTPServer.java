@@ -20,6 +20,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.util.List;
+import java.util.ArrayList;
 
 //Imports for file operations
 import java.io.FileOutputStream;
@@ -33,9 +35,9 @@ public class SMTPServer {
 	private static Charset messageCharset = null;
 	private static CharsetDecoder decoder = null;
 
-
+	
 	//modus = 0: initinal, HELO, MAIL FROM, RCPT TO, <mail bestätigung>. modus = 1: DATA. modus = 2: QUIT. modus = 3: HELP
-	public void sendMessages(int modus,SocketChannel clientChannel)
+	private static void sendMessages(int modus,SocketChannel clientChannel) throws IOException
 	{	switch(modus){
 			case 0: {	ackMsg = new String("220 OK \r\n").getBytes(messageCharset);	}	//init
 			case 1: {	ackMsg = new String("250 OK \r\n").getBytes(messageCharset);	}	//helo
@@ -52,7 +54,7 @@ public class SMTPServer {
 	}
 
 	//send ack back to client
-	private static void sendAck(SocketChannel clientChannel){
+	private static void sendAck(SocketChannel clientChannel) throws IOException {
 		ByteBuffer buf =ByteBuffer.allocate(1024);
 		buf.clear();
 		buf = ByteBuffer.wrap(ackMsg);
@@ -63,7 +65,7 @@ public class SMTPServer {
 		buf.clear();
 	}
 
-	private  String createRandomNumber(){
+	private static String createRandomNumber(){
 		//erstellt zufällige nummer
 		int randomNum = ThreadLocalRandom.current().nextInt(0, 9999 + 1);
 		//umwandeln in 4-stelligen string mit führenden nullen
@@ -73,9 +75,10 @@ public class SMTPServer {
 	}
 
 	
-	private void writeToFile(EmailStruct emailStruct,Charset messageCharset) throws IOException{
+	private static void writeToFile(EmailStruct emailStruct) throws IOException{
 	
 		// if  Reciever Folder already exists then Write in it 
+		// TODO : replace valid path
 		Path path = Paths.get("valid path" + emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt");
 		File newFile = null;
 		
@@ -129,8 +132,6 @@ public class SMTPServer {
 		// Initialize Bytes -> Char Format
 		decoder = messageCharset.newDecoder();
 
-		// TODO Initialize Ack (HELO)
-		setMessages(messageCharset, 0);
 
 		try {
 			selector = Selector.open();
@@ -151,6 +152,8 @@ public class SMTPServer {
 			System.exit(1);
 		}
 		
+		//  Initialize Ack (HELO)
+		
 		// TODO 3. iterate to new selector_key
 		while(true){
 			try {
@@ -166,11 +169,14 @@ public class SMTPServer {
 
 			while(iter.hasNext()) {
 				SelectionKey key = iter.next();
-				// EmailStruct [] myEmailStructs = new EmailStruct();
-				//has to be dynamic
-				key.attach(myEmailStructs);
+				
 				/* check ready set of channel */
+				// EmailStruct [] myEmailStructs = new EmailStruct();
+				
+				List<EmailStruct> myEmailStructs = new ArrayList<>();
+				myEmailStructs.add(new EmailStruct());
 
+				//has to be dynamic
 				// TODO 4. identify flags and set state
 				try{
 					if (key.isAcceptable()) {
@@ -178,6 +184,7 @@ public class SMTPServer {
 						SocketChannel client = sock.accept();
 						client.configureBlocking(false);
 						client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+						key.attach(myEmailStructs);
 					}
 
 				// TODO 5. parse message
@@ -199,30 +206,51 @@ public class SMTPServer {
 						System.out.println(inputString);
 
 						// HIER SOLL PARSE INPUT GERUFEN WERDEN
-						boolean result = parseInput(key, inputString);
+						boolean result = EmailStruct.parseInput(key, inputString);
 						System.out.println(result);
+
+						//  Update files :if Connection is done and Closed then write everything to the Files
+						if(result == true)
+						{
+							EmailStruct[] emailStructArray = (EmailStruct []) key.attachment();
+							for (EmailStruct tmp :emailStructArray) {
+								if(tmp.getState() == EmailStruct.ERROR) continue ;
+								writeToFile(tmp);
+							}
+
+							
+							if(!key.isValid()){
+								System.out.println("Closing Connection");
+								key.cancel();
+								key.channel().close();
+								System.exit(0);
+							}
+							
+							
+						}
 						//INT MODUS is returned here and used for sendMessage
 
-				// if(key.is...)
-				
+			
 
-				// TODO 6. check message validity
 
-				// TODO *. if not valid
-
-				// TODO 7. if valid SEND ACK OR ANSWER HELP
+				//7. if valid SEND ACK OR ANSWER HELP
 						
 
-				// TODO 8. Update files
+				
 					
 					}
-					if (key.isWritable){			
-						sendMessages(modus, channel);
-
-					}
-
-					
-					
+					if (key.isWritable()){	
+						List<EmailStruct> emailStructArray =(List<EmailStruct>) key.attachment();
+						//TODO check casting correctness with try and catch
+						EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
+						int modus=emailStruct.getState() ;
+						if(emailStruct.getHelpFlag() == true){
+							modus = 6 ;
+							emailStruct.deactivateHelpFlag() ;
+						}
+						
+						sendMessages(modus,(SocketChannel) key.channel());
+					}				
 					
 				}catch(IOException ioe) {
 					ioe.printStackTrace();
