@@ -207,32 +207,64 @@ public class EmailStruct {
 
                 case DATA:
                     //code block
+                    // Confirm correctness of format
+                    if (!theHailMaryArray[DATA-1].equals(inputString)){
+                        throw new RuntimeException("Wrong format for DATA.");                                                                    
+                    }
+
+                    // Confirm correctness of state
+                    if (emailStruct.state != RCPTO){
+                        System.out.println("Wrong use of format: DATA can only be sent after \"RCPT TO.\"");
+                        emailStruct.state = ERROR;
+                        return COMPLETE;
+                    }
+
+                    // update status
+                    emailStruct.state = DATA;
                     break;
+
                 case QUIT:
                     //code block
+                    // Confirm correctness of format
+                    if (!theHailMaryArray[QUIT-1].equals(inputString)){
+                        throw new RuntimeException("Wrong format for QUIT.");                                                                    
+                    }
 
-                    break;
+                    // Confirm correctness of message in regards to state
+                    if (emailStruct.state != MESS){
+                        System.out.println("Wrong use of format: QUIT can only be sent after a message was completely sent.");
+                        emailStruct.state = ERROR;
+                        return COMPLETE;
+                    }
+
+                    // update state
+                    emailStruct.state = QUIT;
+                    // return complete to signal end of connection.
+                    return COMPLETE;
+                    
                 case HELP:
                     //code block
 
                     //check format of messsage
-                    if (!theHailMaryArray[HELP+1].equals(inputString)){
+                    if (!theHailMaryArray[HELP-1].equals(inputString)){
                         throw new RuntimeException("Wrong format for HELP.");                                                                    
                     }
 
+                    // raise help flag
                     emailStruct.helpFlag = true;
                     break;
+
                 default:
                     //code block
+                    System.out.println("Mistake in Logic.  How did it all go so wrong?");
+                    emailStruct.state = ERROR;
+                    return COMPLETE;
 
             }
             
         }
 
-        
-
-
         return !COMPLETE;
     }
 
-}
+}       

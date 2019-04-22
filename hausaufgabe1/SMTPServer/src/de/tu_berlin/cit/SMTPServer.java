@@ -39,14 +39,14 @@ public class SMTPServer {
 	//modus = 0: initinal, HELO, MAIL FROM, RCPT TO, <mail bestätigung>. modus = 1: DATA. modus = 2: QUIT. modus = 3: HELP
 	private static void sendMessages(int modus,SocketChannel clientChannel) throws IOException
 	{	switch(modus){
-			case 0: {	ackMsg = new String("220 OK \r\n").getBytes(messageCharset);	}	//init
-			case 1: {	ackMsg = new String("250 OK \r\n").getBytes(messageCharset);	}	//helo
-			case 2: {	ackMsg = new String("250 start mail input \r\n").getBytes(messageCharset);	}	//mailFrom
-			case 3: {	ackMsg = new String("250 closing channel \r\n").getBytes(messageCharset);	}	//rcptTo
-			case 4: {	ackMsg = new String("354 \r\n").getBytes(messageCharset);	}	//data
-			case 5: {	ackMsg = new String("221 OK \r\n").getBytes(messageCharset);	}	//quit
-			case 6: {	ackMsg = new String("214 OK \r\n").getBytes(messageCharset);	} //help
-			case 7: {	ackMsg = new String("250 OK \r\n").getBytes(messageCharset);	} //massage
+			case 0: {	ackMsg = new String("220 OK \r\n").getBytes(messageCharset); break ;	}	//init
+			case 1: {	ackMsg = new String("250 OK \r\n").getBytes(messageCharset); break;	}	//helo
+			case 2: {	ackMsg = new String("250 start mail input \r\n").getBytes(messageCharset); break;	}	//mailFrom
+			case 3: {	ackMsg = new String("250 closing channel \r\n").getBytes(messageCharset);	break; }	//rcptTo
+			case 4: {	ackMsg = new String("354 \r\n").getBytes(messageCharset); break;	}	//data
+			case 5: {	ackMsg = new String("221 OK \r\n").getBytes(messageCharset); break;	}	//quit
+			case 6: {	ackMsg = new String("214 OK \r\n").getBytes(messageCharset); break;	} //help
+			case 7: {	ackMsg = new String("250 OK \r\n").getBytes(messageCharset); break;	} //massage
 		
 		}
 		sendAck(clientChannel);
@@ -55,9 +55,13 @@ public class SMTPServer {
 
 	//send ack back to client
 	private static void sendAck(SocketChannel clientChannel) throws IOException {
-		ByteBuffer buf =ByteBuffer.allocate(1024);
-		buf.clear();
-		buf = ByteBuffer.wrap(ackMsg);
+		
+		System.out.println("Sending ack "+ (new String (ackMsg,messageCharset)));
+		
+		ByteBuffer buf =ByteBuffer.allocate(ackMsg.length);
+		
+		buf.put(ackMsg);
+		//buf = ByteBuffer.wrap(ackMsg);
 		buf.flip();
 		
 		clientChannel.write(buf);
@@ -115,6 +119,7 @@ public class SMTPServer {
 
 	
 	public static void main(String[] args) {
+		System.out.println("I got in");
 
 		// TODO 1.selector and  Socket
 		Selector selector = null ;
@@ -146,6 +151,7 @@ public class SMTPServer {
 			servSock = ServerSocketChannel.open();
 			servSock.configureBlocking(false);
 			servSock.bind(new InetSocketAddress("localhost",12345)); //CHANGE
+			
 			servSock.register(selector, SelectionKey.OP_ACCEPT);
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -156,6 +162,7 @@ public class SMTPServer {
 		
 		// TODO 3. iterate to new selector_key
 		while(true){
+			
 			try {
 				if(selector.select() == 0)
 					continue;
@@ -173,24 +180,26 @@ public class SMTPServer {
 				/* check ready set of channel */
 				// EmailStruct [] myEmailStructs = new EmailStruct();
 				
-				List<EmailStruct> myEmailStructs = new ArrayList<>();
+				List<EmailStruct> myEmailStructs = new ArrayList<EmailStruct>();
 				myEmailStructs.add(new EmailStruct());
 
 				//has to be dynamic
 				// TODO 4. identify flags and set state
 				try{
 					if (key.isAcceptable()) {
+						System.out.println("in Accepted");
 						ServerSocketChannel sock = (ServerSocketChannel) key.channel();
 						SocketChannel client = sock.accept();
 						client.configureBlocking(false);
 						client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 						key.attach(myEmailStructs);
+						System.out.println("out Accepted");
 					}
 
-				// TODO 5. parse message
+					// TODO 5. parse message
 					if (key.isReadable()) {
 					// receive the buffer
-	
+						System.out.println("in Readable");
 						ByteBuffer bytebuf =ByteBuffer.allocate(1024);
 						SocketChannel channel = (SocketChannel) key.channel();
 						channel.read(bytebuf);
@@ -214,7 +223,6 @@ public class SMTPServer {
 						{
 							EmailStruct[] emailStructArray = (EmailStruct []) key.attachment();
 							for (EmailStruct tmp :emailStructArray) {
-								if(tmp.getState() == EmailStruct.ERROR) continue ;
 								writeToFile(tmp);
 							}
 
@@ -224,8 +232,8 @@ public class SMTPServer {
 								key.cancel();
 								key.channel().close();
 								System.exit(0);
-							}
-							
+							}							
+							System.out.println("out Readable");
 							
 						}
 						//INT MODUS is returned here and used for sendMessage
@@ -233,31 +241,34 @@ public class SMTPServer {
 			
 
 
-				//7. if valid SEND ACK OR ANSWER HELP
+				// TODO 7. if valid SEND ACK OR ANSWER HELP
 						
 
 				
 					
 					}
-					if (key.isWritable()){	
+					if (key.isWritable() && key.attachment()!= null){	
+						
 						List<EmailStruct> emailStructArray =(List<EmailStruct>) key.attachment();
 						//TODO check casting correctness with try and catch
+						System.out.println("size of array =" + emailStructArray.size());
 						EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
 						int modus=emailStruct.getState() ;
+						
 						if(emailStruct.getHelpFlag() == true){
 							modus = 6 ;
 							emailStruct.deactivateHelpFlag() ;
 						}
 						
 						sendMessages(modus,(SocketChannel) key.channel());
-					}				
+						System.out.println("sent");
+					}					
 					
 				}catch(IOException ioe) {
 					ioe.printStackTrace();
 					System.exit(1);
 				}
 				
-
 				iter.remove();
 			}
 
