@@ -138,63 +138,54 @@ public class SMTPServer {
 		decoder = messageCharset.newDecoder();
 
 
-		try {
-			selector = Selector.open();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-			System.exit(1);
-		}
-
 		// TODO 2. create channel
 		try {
-   		
+			
+			
+			
+		
+			selector = Selector.open();
+			
 			servSock = ServerSocketChannel.open();
 			servSock.configureBlocking(false);
 			servSock.bind(new InetSocketAddress("localhost",12345)); //CHANGE
 			
 			servSock.register(selector, SelectionKey.OP_ACCEPT);
-		} catch(IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
 		
-		//  Initialize Ack (HELO)
-		
-		// TODO 3. iterate to new selector_key
-		while(true){
 			
-			try {
+			//  Initialize Ack (HELO)
+		
+			// TODO 3. iterate to new selector_key
+			while(true){
 				if(selector.select() == 0)
 					continue;
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}	
+		
+				Set<SelectionKey> selectedKeys = selector.selectedKeys();
+				Iterator<SelectionKey> iter = selectedKeys.iterator();
 
-			Set<SelectionKey> selectedKeys = selector.selectedKeys();
-			Iterator<SelectionKey> iter = selectedKeys.iterator();
-
-			while(iter.hasNext()) {
-				SelectionKey key = iter.next();
+				while(iter.hasNext()) {
+					SelectionKey key = iter.next();
 				
-				/* check ready set of channel */
-				// EmailStruct [] myEmailStructs = new EmailStruct();
+					/* check ready set of channel */
+					// EmailStruct [] myEmailStructs = new EmailStruct();
 				
-				List<EmailStruct> myEmailStructs = new ArrayList<EmailStruct>();
-				myEmailStructs.add(new EmailStruct());
+					List<EmailStruct> myEmailStructs = new ArrayList<EmailStruct>();
+					myEmailStructs.add(new EmailStruct());
 
-				//has to be dynamic
-				// TODO 4. identify flags and set state
-				try{
-					if (key.isAcceptable()) {
-						System.out.println("in Accepted");
-						ServerSocketChannel sock = (ServerSocketChannel) key.channel();
-						SocketChannel client = sock.accept();
-						client.configureBlocking(false);
-						client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-						key.attach(myEmailStructs);
-						System.out.println("out Accepted");
-					}
+					//has to be dynamic
+					// TODO 4. identify flags and set state
+					
+						if (key.isAcceptable()) {
+							System.out.println("in Accepted");
+							ServerSocketChannel sock = (ServerSocketChannel) key.channel();
+							SocketChannel client = sock.accept();
+							client.configureBlocking(false);
+							client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, myEmailStructs); //If the att argument is not null then the key's attachment will have been set to that value. 
+						
+							//key.attach(myEmailStructs);
+							System.out.println("out Accepted");
+						
+						}
 
 					// TODO 5. parse message
 					if (key.isReadable()) {
@@ -204,56 +195,50 @@ public class SMTPServer {
 						SocketChannel channel = (SocketChannel) key.channel();
 						channel.read(bytebuf);
 						bytebuf.flip();
-						CharBuffer charbuf;
-
-					
-						charbuf = decoder.decode(bytebuf);
 						
-					
+						CharBuffer charbuf= decoder.decode(bytebuf);
 						String inputString = charbuf.toString();
+						
+						//NECESSARY
 					
-						System.out.println(inputString);
+					
+						System.out.println("what we received from the client: "+inputString);
 
 						// HIER SOLL PARSE INPUT GERUFEN WERDEN
 						boolean result = EmailStruct.parseInput(key, inputString);
-						System.out.println(result);
+						System.out.println("email was parsed and result ="+result);
 
 						//  Update files :if Connection is done and Closed then write everything to the Files
-						if(result == true)
-						{
-							EmailStruct[] emailStructArray = (EmailStruct []) key.attachment();
-							for (EmailStruct tmp :emailStructArray) {
-								writeToFile(tmp);
-							}
+							if(result == true)
+							{
+								EmailStruct[] emailStructArray = (EmailStruct []) key.attachment();
+								for (EmailStruct tmp :emailStructArray) {
+									writeToFile(tmp);
+								}
 
 							
-							if(!key.isValid()){
-								System.out.println("Closing Connection");
-								key.cancel();
-								key.channel().close();
-								System.exit(0);
-							}							
-							System.out.println("out Readable");
-							
-						}
+								if(!key.isValid()){
+									System.out.println("Closing Connection");
+									key.cancel();
+									key.channel().close();
+									System.exit(0);
+								}								
+								
+						bytebuf.clear(); 
+						
+							}
 						//INT MODUS is returned here and used for sendMessage
 
-			
-
-
-				// TODO 7. if valid SEND ACK OR ANSWER HELP
-						
-
-				
-					
+					// TODO 7. if valid SEND ACK OR ANSWER HELP
 					}
 					if (key.isWritable() && key.attachment()!= null){	
 						
 						List<EmailStruct> emailStructArray =(List<EmailStruct>) key.attachment();
 						//TODO check casting correctness with try and catch
-						System.out.println("size of array =" + emailStructArray.size());
+						//System.out.println("size of array =" + emailStructArray.size());
 						EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
 						int modus=emailStruct.getState() ;
+						System.out.println("modus ="+ modus);
 						
 						if(emailStruct.getHelpFlag() == true){
 							modus = 6 ;
@@ -261,17 +246,21 @@ public class SMTPServer {
 						}
 						
 						sendMessages(modus,(SocketChannel) key.channel());
-						System.out.println("sent");
+						
+					
 					}					
 					
-				}catch(IOException ioe) {
-					ioe.printStackTrace();
-					System.exit(1);
+					iter.remove();
 				}
 				
-				iter.remove();
 			}
 
+		
+		}catch(IOException e) {
+				e.printStackTrace();
+				System.exit(1);
+			
 		}
 	}
 }
+

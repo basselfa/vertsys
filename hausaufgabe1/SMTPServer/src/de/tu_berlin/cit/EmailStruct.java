@@ -57,6 +57,9 @@ public class EmailStruct {
     public int getState(){
         return state;
     }
+    public int setState(int x){
+        return state=x;
+    }
 
     public String getHostName(){
         return hostName;
@@ -87,7 +90,7 @@ public class EmailStruct {
     public static boolean parseInput(SelectionKey key, String inputString){
 
         // copy of the myEmailStruct (siehe Server code) to avoid repeated casting for each of the cases (HELO, DATA,..)
-        List<EmailStruct> emailStructArray = (List<EmailStruct>) key.attachment();
+        List<EmailStruct> emailStructArray = (ArrayList<EmailStruct>) key.attachment();
         // TODO throw and catch needed to verify casting type
         EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1);
 
@@ -134,7 +137,11 @@ public class EmailStruct {
                     
                     // Extract host name + Verify format
                     String hostName = inputString.substring(theHailMaryArray[HELO-1].length()); 
-                    if(hostName.charAt(0) != '<' || hostName.charAt(hostName.length() - 1) != '>'){
+                    
+                    
+                    
+                 // The Format for HostName does not include "<" or ">"
+                    if(hostName.length() <= theHailMaryArray[HELO-1].length()+1 ){
                         // ERROR - Wrong host format.
                         System.out.println("Wrong use of format: Wrong message format of HELO");
                         emailStruct.state = ERROR;
@@ -142,7 +149,8 @@ public class EmailStruct {
                     }
                     
                     // Save to structure
-                    emailStruct.hostName = hostName.substring(1, hostName.length()-2);
+                    emailStruct.hostName = hostName;
+                    System.out.println("hostName in emailStruct"+ emailStruct.hostName); 
                     
                     
                     // Update state
@@ -247,6 +255,7 @@ public class EmailStruct {
 
                     //check format of messsage
                     if (!theHailMaryArray[HELP-1].equals(inputString)){
+                    	System.out.println("Hail Mary: "+ theHailMaryArray[HELP-1]);
                         throw new RuntimeException("Wrong format for HELP.");                                                                    
                     }
 
@@ -267,4 +276,4 @@ public class EmailStruct {
         return !COMPLETE;
     }
 
-}       
+}
