@@ -46,7 +46,7 @@ public class EmailStruct {
     public static final int ERROR = 8;
 
 
-
+    private boolean sentAckFlag = false ;
     private int state = NEW;
     private boolean helpFlag = false; 
     private String hostName = null;
@@ -83,6 +83,12 @@ public class EmailStruct {
     public void deactivateHelpFlag(){
         this.helpFlag= false;
     }
+    public boolean getAckFlag(){
+        return sentAckFlag;
+    }
+    public void setAckFlag(){
+        this.sentAckFlag= true;
+    }
 
 
 
@@ -97,11 +103,18 @@ public class EmailStruct {
 
         
         if (emailStruct.state == DATA){
-            emailStruct.data.concat(inputString);
+            emailStruct.data = emailStruct.data + inputString;
+            System.out.println("Message is getting received");
             // make sure  all data has been received
+           
+            System.out.println("data length is: "+emailStruct.data.length() + "Terminator length is: "+ TERMINATOR.length());
             if(emailStruct.data.length() >= TERMINATOR.length()) { // avoid error in the  substring method
-                if(TERMINATOR.equals(emailStruct.data.substring(emailStruct.data.length() - 3))) {
+           //     if(TERMINATOR.equals(emailStruct.data.substring(emailStruct.data.length() - 3))) {
+            	System.out.println("Got into first if");
+            	if(emailStruct.data.endsWith(TERMINATOR)) {
                     emailStruct.state = MESS; // State after getting the complete massage 
+                    emailStruct.sentAckFlag = false ;
+                    System.out.println("Message fully received.");
                 }
             }
 
@@ -114,6 +127,7 @@ public class EmailStruct {
         }else{
 
             int state = NEW;
+            emailStruct.sentAckFlag = false ;
 
             for(int i=0 ; i < theHailMaryArray.length ; i++){
                 if(inputString.length() < theHailMaryArray[i].length())
@@ -155,6 +169,7 @@ public class EmailStruct {
                     
                     // Update state
                     emailStruct.state = HELO; 
+                    emailStruct.sentAckFlag = false ;
 
                     //update attachment
                     ((List<EmailStruct>) key.attachment()).set(emailStructArray.size()-1, emailStruct);
@@ -176,17 +191,18 @@ public class EmailStruct {
 
                     // Extract sender's email adress + Verify format
                     String sender = inputString.substring(theHailMaryArray[MAILFROM-1].length());
-                    if(sender.charAt(0) != '<' || sender.charAt(sender.length() - 1) != '>'){
-                        // ERROR - Wrong email format.
-                        System.out.println("Wrong use of format: Wrong message format of email-address");
-                        emailStruct.state = ERROR;
-                        return COMPLETE;
-                    }
+//                    if(sender.charAt(0) != '<' || sender.charAt(sender.length() - 1) != '>'){
+//                        // ERROR - Wrong email format.
+//                        System.out.println("Wrong use of format: Wrong message format of email-address");
+//                        emailStruct.state = ERROR;
+//                        return COMPLETE;
+//                    }
                     
                     // Save to structure
-                    emailStruct.sender = sender.substring(1, sender.length()-2);
-
+                    emailStruct.sender = sender; //.substring(0, sender.length()-1);
+                    System.out.println("Sender: " + emailStruct.sender);
                     emailStruct.state = MAILFROM;
+                    emailStruct.sentAckFlag = false ;
                     break;
 
                 case RCPTO:
@@ -202,22 +218,25 @@ public class EmailStruct {
 
                     // Extract receiver's email adress + Verify format
                     String receiver = inputString.substring(theHailMaryArray[RCPTO-1].length());
-                    if(receiver.charAt(0) != '<' || receiver.charAt(receiver.length() - 1) != '>'){
-                        // ERROR - Wrong email format.
-                        System.out.println("Wrong use of format: Wrong message format of email-address");
-                        emailStruct.state = ERROR;
-                        return COMPLETE;
-                    }
+//                    if(receiver.charAt(0) != '<' || receiver.charAt(receiver.length() - 1) != '>'){
+//                        // ERROR - Wrong email format.
+//                        System.out.println("Wrong use of format: Wrong message format of email-address");
+//                        emailStruct.state = ERROR;
+//                        return COMPLETE;
+//                    }
                     // Save to structure
-                    emailStruct.receiver = receiver.substring(1, receiver.length()-2);
+                    emailStruct.receiver = receiver; //.substring(1, receiver.length()-2);
+                    System.out.println("receiver: " + emailStruct.receiver);
                     emailStruct.state = RCPTO;
+                    emailStruct.sentAckFlag = false ;
                     break;
 
                 case DATA:
                     //code block
                     // Confirm correctness of format
-                    if (!theHailMaryArray[DATA-1].equals(inputString)){
-                        throw new RuntimeException("Wrong format for DATA.");                                                                    
+//                    if (!theHailMaryArray[DATA-1].equals(inputString)){
+                    if (!inputString.equals("DATA\r\n")){
+                    	throw new RuntimeException("Wrong format for DATA.");                                                                    
                     }
 
                     // Confirm correctness of state
@@ -228,14 +247,17 @@ public class EmailStruct {
                     }
 
                     // update status
+                    System.out.println("DATA command was received...");
                     emailStruct.state = DATA;
+                    emailStruct.sentAckFlag = false ;
                     break;
 
                 case QUIT:
                     //code block
                     // Confirm correctness of format
-                    if (!theHailMaryArray[QUIT-1].equals(inputString)){
-                        throw new RuntimeException("Wrong format for QUIT.");                                                                    
+//                    if (!theHailMaryArray[QUIT-1].equals(inputString)){
+                	if (inputString.equals("QUIT")) {
+                		throw new RuntimeException("Wrong format for QUIT.");                                                                    
                     }
 
                     // Confirm correctness of message in regards to state
@@ -247,6 +269,7 @@ public class EmailStruct {
 
                     // update state
                     emailStruct.state = QUIT;
+                    emailStruct.sentAckFlag = false ;
                     // return complete to signal end of connection.
                     return COMPLETE;
                     
@@ -254,8 +277,11 @@ public class EmailStruct {
                     //code block
 
                     //check format of messsage
-                    if (!theHailMaryArray[HELP-1].equals(inputString)){
+//                    if (!theHailMaryArray[HELP-1].equals(inputString)){
+                    if (inputString.equals("HELP")){
                     	System.out.println("Hail Mary: "+ theHailMaryArray[HELP-1]);
+                    	System.out.println("Format in: "+ inputString);
+                    	
                         throw new RuntimeException("Wrong format for HELP.");                                                                    
                     }
 
@@ -275,5 +301,3 @@ public class EmailStruct {
 
         return !COMPLETE;
     }
-
-}
