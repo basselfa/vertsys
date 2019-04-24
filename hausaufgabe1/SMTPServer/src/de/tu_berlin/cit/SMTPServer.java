@@ -83,22 +83,23 @@ public class SMTPServer {
 	
 		// if  Reciever Folder already exists then Write in it 
 		// TODO : replace valid path
-		Path path = Paths.get("valid path" + emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt");
+		Path path = Paths.get("/home/users/b/basselfa/irb-ubuntu/emails" + emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt");
 		File newFile = null;
 		
 		if (Files.notExists(path))
 		{
-			newFile = new File("valid path"+emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt"); 
+			newFile = new File("/home/users/b/basselfa/irb-ubuntu/emails"+emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt"); 
 			newFile.getParentFile().mkdirs();
-			FileOutputStream file = new FileOutputStream("valid path" + emailStruct.getReceiver()+"/"+emailStruct.getReceiver()+".txt");
+			FileOutputStream file = new FileOutputStream("/home/users/b/basselfa/irb-ubuntu/emails" + emailStruct.getReceiver()+"/"+emailStruct.getReceiver()+".txt");
+			file.close();
 		}
 		//creates random id in string format
 		String massage_id = createRandomNumber();
 		
 		// create sender File 
-		FileOutputStream f = new FileOutputStream("valid path"+emailStruct.getReceiver()+"/"+ emailStruct.getSender()+"_"+massage_id+".txt");
+		FileOutputStream f = new FileOutputStream("/home/users/b/basselfa/irb-ubuntu/emails"+emailStruct.getReceiver()+"/"+ emailStruct.getSender()+"_"+massage_id+".txt");
 		FileChannel channel = f.getChannel();
-
+		f.close();
 	
 		//create and put Massage in ByteBuffer
 		ByteBuffer buf = ByteBuffer.allocate(8);
@@ -238,16 +239,19 @@ public class SMTPServer {
 						//System.out.println("size of array =" + emailStructArray.size());
 						EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
 						int modus=emailStruct.getState() ;
-						System.out.println("modus ="+ modus);
+						
 						
 						if(emailStruct.getHelpFlag() == true){
 							modus = 6 ;
 							emailStruct.deactivateHelpFlag() ;
 						}
 						
+						// if ack already sent then skip
+						if (emailStruct.getAckFlag()== true)
+							continue;
+						System.out.println("modus ="+ modus);
 						sendMessages(modus,(SocketChannel) key.channel());
-						
-					
+						emailStruct.setAckFlag();
 					}					
 					
 					iter.remove();
@@ -263,4 +267,3 @@ public class SMTPServer {
 		}
 	}
 }
-
