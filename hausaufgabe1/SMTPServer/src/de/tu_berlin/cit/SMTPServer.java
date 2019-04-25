@@ -84,7 +84,7 @@ public class SMTPServer {
 	
 		// if  Reciever Folder already exists then Write in it 
 		// TODO : replace valid path
-		Path path = Paths.get("/home/users/b/basselfa/irb-ubuntu/emails" + emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt");
+		Path path = Paths.get("/home/users/b/basselfa/irb-ubuntu/emails"+emailStruct.getReceiver()+"/" + emailStruct.getReceiver()+".txt");
 		File newFile = null;
 		
 		if (Files.notExists(path))
@@ -165,6 +165,7 @@ public class SMTPServer {
 				Set<SelectionKey> selectedKeys = selector.selectedKeys();
 				Iterator<SelectionKey> iter = selectedKeys.iterator();
 
+				
 				while(iter.hasNext()) {
 					SelectionKey key = iter.next();
 				
@@ -175,8 +176,6 @@ public class SMTPServer {
 					// myEmailStructs.add(new EmailStruct());
 
 
-					// initialize controller class
-					emailClassController myEmails = new emailClassController();
 
 
 
@@ -188,9 +187,10 @@ public class SMTPServer {
 							ServerSocketChannel sock = (ServerSocketChannel) key.channel();
 							SocketChannel client = sock.accept();
 							client.configureBlocking(false);
-							client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, myEmails); //If the att argument is not null then the key's attachment will have been set to that value. 
-						
-							//key.attach(myEmailStructs);
+							client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, new emailClassController()); //If the att argument is not null then the key's attachment will have been set to that value. 
+							// initialize controller class
+							
+							
 							System.out.println("out Accepted");
 						
 						}
@@ -209,9 +209,9 @@ public class SMTPServer {
 						
 						//NECESSARY
 					
-					
+						System.out.println("************************************************************");
 						System.out.println("what we received from the client: "+inputString);
-
+						emailClassController myEmails = (emailClassController) key.attachment();
 						// HIER SOLL PARSE INPUT GERUFEN WERDEN
 						myEmails = emailClassController.parseInput(myEmails, inputString);
 
@@ -259,7 +259,7 @@ public class SMTPServer {
 						//System.out.println("size of array =" + emailStructArray.size());
 						//EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
 
-						myEmails = (emailClassController) key.attachment();
+						emailClassController myEmails = (emailClassController) key.attachment();
 						EmailStruct emailStruct = myEmails.getLastMessage();
 						if(emailStruct == null){
 							break;
