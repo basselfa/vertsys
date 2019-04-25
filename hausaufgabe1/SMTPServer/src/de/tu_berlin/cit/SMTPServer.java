@@ -22,6 +22,7 @@ import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.ArrayList;
+import java.lang.Object;
 
 //Imports for file operations
 import java.io.FileOutputStream;
@@ -170,8 +171,14 @@ public class SMTPServer {
 					/* check ready set of channel */
 					// EmailStruct [] myEmailStructs = new EmailStruct();
 				
-					List<EmailStruct> myEmailStructs = new ArrayList<EmailStruct>();
-					myEmailStructs.add(new EmailStruct());
+					// List<EmailStruct> myEmailStructs = new ArrayList<EmailStruct>();
+					// myEmailStructs.add(new EmailStruct());
+
+
+					// initialize controller class
+					emailClassController myEmails = new emailClassController();
+
+
 
 					//has to be dynamic
 					// TODO 4. identify flags and set state
@@ -181,7 +188,7 @@ public class SMTPServer {
 							ServerSocketChannel sock = (ServerSocketChannel) key.channel();
 							SocketChannel client = sock.accept();
 							client.configureBlocking(false);
-							client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, myEmailStructs); //If the att argument is not null then the key's attachment will have been set to that value. 
+							client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, myEmails); //If the att argument is not null then the key's attachment will have been set to that value. 
 						
 							//key.attach(myEmailStructs);
 							System.out.println("out Accepted");
@@ -206,52 +213,81 @@ public class SMTPServer {
 						System.out.println("what we received from the client: "+inputString);
 
 						// HIER SOLL PARSE INPUT GERUFEN WERDEN
-						boolean result = EmailStruct.parseInput(key, inputString);
-						System.out.println("email was parsed and result ="+result);
+						myEmails = emailClassController.parseInput(myEmails, inputString);
+
+						key.attach(myEmails);
+
+						System.out.println("email was parsed and result ="+myEmails.getComplete());
 
 						//  Update files :if Connection is done and Closed then write everything to the Files
-							if(result == true)
-							{
-								EmailStruct[] emailStructArray = (EmailStruct []) key.attachment();
-								for (EmailStruct tmp :emailStructArray) {
-									writeToFile(tmp);
-								}
+						if(myEmails.getComplete() == true)
+						{
 
+							// auskommentiert wegen Refaktorisierung
+							// EmailStruct[] emailStructArray = (EmailStruct []) key.attachment();
+							// for (EmailStruct tmp :emailStructArray) {
+							// 	writeToFile(tmp);
+							// }
+
+							myEmails = ((emailClassController) key.attachment());
 							
-								if(!key.isValid()){
-									System.out.println("Closing Connection");
-									key.cancel();
-									key.channel().close();
-									System.exit(0);
-								}								
-								
+							EmailStruct tmp = myEmails.popLastMessage();
+							while(tmp != null){
+								writeToFile(tmp);
+								tmp = myEmails.popLastMessage();
+							}
+
+						
+							if(!key.isValid()){
+								System.out.println("Closing Connection");
+								key.cancel();
+								key.channel().close();
+								System.exit(0);
+							}								
+							
 						bytebuf.clear(); 
 						
-							}
+						}
 						//INT MODUS is returned here and used for sendMessage
 
 					// TODO 7. if valid SEND ACK OR ANSWER HELP
 					}
 					if (key.isWritable() && key.attachment()!= null){	
 						
-						List<EmailStruct> emailStructArray =(List<EmailStruct>) key.attachment();
+						//List<EmailStruct> emailStructArray =(List<EmailStruct>) key.attachment();
 						//TODO check casting correctness with try and catch
 						//System.out.println("size of array =" + emailStructArray.size());
-						EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
-						int modus=emailStruct.getState() ;
+						//EmailStruct emailStruct = emailStructArray.get(emailStructArray.size()-1); 
+
+						myEmails = (emailClassController) key.attachment();
+						EmailStruct emailStruct = myEmails.getLastMessage();
+						if(emailStruct == null){
+							break;
+						}
+
+						int modus = myEmails.getLastState();
 						
 						
-						if(emailStruct.getHelpFlag() == true){
+						if(myEmails.getHelpFlag() == true){
 							modus = 6 ;
-							emailStruct.deactivateHelpFlag() ;
+							myEmails.deactivateHelpFlag();
 						}
 						
 						// if ack already sent then skip
-						if (emailStruct.getAckFlag()== true)
+						if (myEmails.getAckFlag()== true)
 							continue;
 						System.out.println("modus ="+ modus);
 						sendMessages(modus,(SocketChannel) key.channel());
-						emailStruct.setAckFlag();
+						myEmails.setAckFlag();
+
+
+
+						// Update emailClass
+						myEmails.setLast(emailStruct);
+						// Update attachment 
+						key.attach(myEmails);
+
+
 					}					
 					
 					iter.remove();
