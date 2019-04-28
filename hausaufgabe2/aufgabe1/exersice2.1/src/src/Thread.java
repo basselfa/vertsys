@@ -11,14 +11,27 @@ public class Thread {
 	
 	private int ID;
 	
+	public boolean Active;
+	
 	public Queue<Integer> q = new LinkedList<>();
 	
 	public Thread(int id) {
 		this.ID = id;
 	}
 	
-	/*
-	pullQueue(){}
+	//conatandly pulls queue and works. when active == false -> store hiistory
+	public void doYourWork(){
+		
+		while(Active) {
+			//do stuff
+		}
+		
+		saveHistory();
+	}
+	 /* 
+	pullQueue(){
+	
+	}
 	
 	receiveExternalMessage(X){
 		Message Y = createMessage(X);
@@ -31,11 +44,14 @@ public class Thread {
 	}
 	
 	private void storeMessage(Z){};
-	
-	public boolean saveHistory(){
-		do stuff
-		return true;
-	}
 	*/
+	public static void saveHistory(){
+		//do stuff
+	}
+	
+	
+	public void setActive(Boolean active) {
+		this.Active = active;
+	}
 
 }

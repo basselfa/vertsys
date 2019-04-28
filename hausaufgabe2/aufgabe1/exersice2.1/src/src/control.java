@@ -14,9 +14,20 @@ public class control {
 		}
 		
 		client Client = new client(argNumClinets, argNumThreads);
+		
+		//ablauf:
+		//start client
+		//start mSequencer
+		//start threads
+		//checken ob alles durch
+		//close threads(set thread.active auf false)
+		//exit
 	}
 	
-	public void closeThreads() {
-		
+	public void closeThreads(int argNumThreads) {
+
+		for(int i = 0; i<argNumThreads; i++) {
+			Thread thread = new Thread(i);
+		}
 	}
 }

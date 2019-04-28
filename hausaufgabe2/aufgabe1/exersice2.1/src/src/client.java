@@ -6,6 +6,8 @@ public class client {
 	
 	public client(int numOfMessages, int numOfThreads) {
 		
+		
+		
 	}
 
 }
