@@ -32,6 +32,32 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class SMTPServer {
 	
+	
+    //###################################################################
+    //#########################  constants  #############################
+    //###################################################################
+    // IMPORTANT!!! IF YOU CHANGE ANY OF THESE VALUES THEN CHANGE THEM IN ALL FILES.
+    private static final String TERMINATOR = "\r\n.\r\n";
+    private static final boolean COMPLETE = true;
+
+    public static final String [] theHailMaryArray = {"HELO", "MAIL FROM:", "RCPT TO:", "DATA", "QUIT", "HELP"};
+
+    public static final int NEW = 0;
+    public static final int HELO = 1;
+    public static final int MAILFROM = 2;
+    public static final int RCPTO = 3;
+    public static final int DATA = 4;
+    public static final int QUIT = 5;
+    public static final int HELP = 6;
+
+    public static final int MESS = 7;
+    public static final int ERROR = 8;
+
+    //###################################################################
+
+
+    
+	
 	private static byte [] ackMsg = null;
 	private static Charset messageCharset = null;
 	private static CharsetDecoder decoder = null;
@@ -84,26 +110,28 @@ public class SMTPServer {
 	
 		// if  Reciever Folder already exists then Write in it 
 		// TODO : replace valid path
-		Path path = Paths.get("/home/users/b/basselfa/irb-ubuntu/emails"+emailStruct.getReceiver()+"/" + emailStruct.getReceiver()+".txt");
+		Path path = Paths.get("/home/users/b/basselfa/irb-ubuntu/emails/"+emailStruct.getReceiver()+"/");
+//		Path path = Paths.get("/home/users/b/basselfa/irb-ubuntu/emails/"+emailStruct.getReceiver()+"/" + emailStruct.getReceiver()+".txt");
 		File newFile = null;
 		
 		if (Files.notExists(path))
 		{
-			newFile = new File("/home/users/b/basselfa/irb-ubuntu/emails"+emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt"); 
-			newFile.getParentFile().mkdirs();
-			FileOutputStream file = new FileOutputStream("/home/users/b/basselfa/irb-ubuntu/emails" + emailStruct.getReceiver()+"/"+emailStruct.getReceiver()+".txt");
-			file.close();
+//			newFile = new File("/home/users/b/basselfa/irb-ubuntu/emails/"+emailStruct.getReceiver()+"/"+ emailStruct.getReceiver()+".txt"); 
+			newFile = new File("/home/users/b/basselfa/irb-ubuntu/emails/"+emailStruct.getReceiver()+"/"); 
+			newFile.mkdirs();
+//			FileOutputStream file = new FileOutputStream("/home/users/b/basselfa/irb-ubuntu/emails/" + emailStruct.getReceiver()+"/");
+//			file.close();
 		}
 		//creates random id in string format
 		String massage_id = createRandomNumber();
 		
 		// create sender File 
-		FileOutputStream f = new FileOutputStream("/home/users/b/basselfa/irb-ubuntu/emails"+emailStruct.getReceiver()+"/"+ emailStruct.getSender()+"_"+massage_id+".txt");
+		FileOutputStream f = new FileOutputStream("/home/users/b/basselfa/irb-ubuntu/emails/"+emailStruct.getReceiver()+"/"+ emailStruct.getSender()+"_"+massage_id);
 		FileChannel channel = f.getChannel();
-		f.close();
+		
 	
 		//create and put Massage in ByteBuffer
-		ByteBuffer buf = ByteBuffer.allocate(8);
+		ByteBuffer buf = ByteBuffer.allocate(emailStruct.getData().getBytes(messageCharset).length);
 		buf.put(emailStruct.getData().getBytes(messageCharset));
 		// change to writing Modus
 		buf.flip();
@@ -113,6 +141,7 @@ public class SMTPServer {
 		channel.write(buf);
 		channel.close();
 		buf.clear();	
+		f.close();
 	
 
 	 }
@@ -182,18 +211,18 @@ public class SMTPServer {
 					//has to be dynamic
 					// TODO 4. identify flags and set state
 					
-						if (key.isAcceptable()) {
-							System.out.println("in Accepted");
-							ServerSocketChannel sock = (ServerSocketChannel) key.channel();
-							SocketChannel client = sock.accept();
-							client.configureBlocking(false);
-							client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, new emailClassController()); //If the att argument is not null then the key's attachment will have been set to that value. 
-							// initialize controller class
-							
-							
-							System.out.println("out Accepted");
+					if (key.isAcceptable()) {
+						System.out.println("in Accepted");
+						ServerSocketChannel sock = (ServerSocketChannel) key.channel();
+						SocketChannel client = sock.accept();
+						client.configureBlocking(false);
+						client.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE, new emailClassController()); //If the att argument is not null then the key's attachment will have been set to that value. 
+						// initialize controller class
 						
-						}
+						
+						System.out.println("out Accepted");
+					
+					}
 
 					// TODO 5. parse message
 					if (key.isReadable()) {
@@ -213,11 +242,13 @@ public class SMTPServer {
 						System.out.println("what we received from the client: "+inputString);
 						emailClassController myEmails = (emailClassController) key.attachment();
 						// HIER SOLL PARSE INPUT GERUFEN WERDEN
+						if(myEmails.getLastMessage() == null) System.out.println("struct is zero : ");
+						
 						myEmails = emailClassController.parseInput(myEmails, inputString);
 
 						key.attach(myEmails);
 
-						System.out.println("email was parsed and result ="+myEmails.getComplete());
+						System.out.println("message completely sent ="+myEmails.getComplete());
 
 						//  Update files :if Connection is done and Closed then write everything to the Files
 						if(myEmails.getComplete() == true)
@@ -238,11 +269,12 @@ public class SMTPServer {
 							}
 
 						
-							if(!key.isValid()){
+							if(myEmails.getLastState() == QUIT){
 								System.out.println("Closing Connection");
 								key.cancel();
 								key.channel().close();
 								System.exit(0);
+							
 							}								
 							
 						bytebuf.clear(); 
@@ -252,7 +284,7 @@ public class SMTPServer {
 
 					// TODO 7. if valid SEND ACK OR ANSWER HELP
 					}
-					if (key.isWritable() && key.attachment()!= null){	
+					if (key.isWritable()){	
 						
 						//List<EmailStruct> emailStructArray =(List<EmailStruct>) key.attachment();
 						//TODO check casting correctness with try and catch
