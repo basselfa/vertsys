@@ -671,7 +671,7 @@ public class SMTPClient {
 					System.exit(1);
 				}
 				
-				iter.remove();
+				// iter.remove();
 			}
 		}
 		
