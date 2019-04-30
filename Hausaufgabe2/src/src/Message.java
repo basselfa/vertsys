@@ -1,12 +1,12 @@
 package src;
-
 public class Message {
 	
+	
 	private final int Payload;
-	private String TYPE;
+	private int TYPE; //1 is external, 0 is internal
 	//mehr argumente möglich
 	
-	public Message(int payload, String type) {
+	public Message(int payload, int type) {
 		this.Payload = payload;
 		this.TYPE = type;
 	}
@@ -15,7 +15,7 @@ public class Message {
 		return Payload;
 	}
 	
-	public void setType(String type) {
+	public void setType(int type) {
 		this.TYPE = type;
 	}
 }
