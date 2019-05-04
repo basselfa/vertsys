@@ -20,15 +20,17 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import de.tu_berlin.cit.SMTPServerState;
 
-public class SMTPServer {
+
+public class alekho {
 
 	private ServerSocketChannel serverSocket;
 	private InetSocketAddress addrSock;
 	private List<SMTPServerState> recievedMails;
 //	private SMTPServerState state;
 
-	public SMTPServer() {
+	public alekho() {
 		try {
 			InetSocketAddress socketAdd = new InetSocketAddress(6332);
 			this.addrSock = socketAdd;
@@ -252,7 +254,7 @@ public class SMTPServer {
 
 	public static void main(String[] args) {
 
-		SMTPServer server = new SMTPServer();
+		alekho server = new alekho();
 		server.startServer();
 	}
 
