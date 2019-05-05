@@ -5,8 +5,20 @@ import java.util.Random;
 
 /*sends random masseges with ints to single thread(external message)*/
 
-public class client {
+public class client implements Runnable {
 	RecThread thread;
+	int numOfMessages;
+	int numOfThreads;
+	ArrayList<RecThread> list;
+	
+	
+	public client(int nMessages, int nThreads,ArrayList<RecThread>rList) {
+		numOfMessages=nMessages;
+		numOfThreads=nThreads;
+		list= rList ;
+		
+	}	
+	
 	public int random(int upperBound) {
 		Random rand = new Random();
 		// Obtain a number between [0 - (numOfThreads-1) ].
@@ -15,33 +27,40 @@ public class client {
 		return n += 1;
 	}
 	
-	public void getRandomThread(int numOfThreads, ArrayList<RecThread> list) {
-		int randThreadID = random(numOfThreads);
-		System.out.println("Client will be sending  messages to thread"+randThreadID);	
-		for(int j=0 ; j< list.size(); j++) {
-			if(list.get(j).getID() == randThreadID)
-				thread = list.get(j);
-		}
+	public RecThread getRandomThread() {
+		int randThreadID = random(numOfThreads)-1;
+		return list.get(randThreadID);
+		
 	}
 	
-	public void sendRandomMsgs(int numOfMsgs) {
-		for(int i=0;i<numOfMsgs;i++) {
+	public void sendRandomMsgs() throws InterruptedException {
+		for(int i=0;i<numOfMessages;i++) {
 			//get the right thread from RecThread List
 			int randMsg =random(1000);
-			Message msg = new Message(randMsg,1);
-			thread.add(msg);
+			Message msg = new Message(randMsg,1,i);
+			RecThread thread = getRandomThread() ;
+			System.out.println("Client will be sending  message with id:"+msg.getId()+" to thread"+ thread.getFuckingID());	
+			thread.addExternal(msg);
+//
+			synchronized(this) {
+				this.wait();
+			}
+			
 			
 		}	
 	}
 		
-	
-	public client(int numOfMessages, int numOfThreads, ArrayList<RecThread> list) {
-		//pick random thread 
-		getRandomThread(numOfThreads,list);
+	@Override
+	public void run() {
+		
 		//send messages to thread
-		sendRandomMsgs(numOfMessages);
-		//Checking if the thread is receiving 
-		thread.printQueue();
+		try {
+			sendRandomMsgs();
+		
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }
