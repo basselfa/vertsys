@@ -1,5 +1,4 @@
-package server;
-
+package de.tu_berlin.cit;
 
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;

@@ -12,67 +12,57 @@ import java.util.Queue;
  *when closed -> write history to log file*/
 
 public class RecThread implements Runnable{
-	private Thread t;
-	private mSequencer seq;
-	private int ID;
-	private int counter=0;
-	boolean flagAwake = true ;
-	RecThread lock;
 	
-	public LinkedList<Message> externalQueue = new LinkedList<>();
-	public LinkedList<Message> internalQueue = new LinkedList<>();
 	
+	// VARIABLES
+	private Thread t; // the actual thread
+	private mSequencer seq; // message sequencer instance
+	private int ID; // thread ID
+//	private int counter=0;
+	boolean flagAwake = true; // activity flag, used to terminate thread
+//	RecThread lock;
+	
+	public LinkedList<Message> externalQueue = new LinkedList<>(); // list of messages from clients handled
+	public LinkedList<Message> internalQueue = new LinkedList<>(); // list of messages from message sequencer... printed out at the end of the process
+	
+	
+	
+	
+	//METHODS
+	/**
+	 * builder for receiving thread, allocates a thread id
+	 * @param id thread id set by controller upon creation
+	 */
 	public RecThread(int id) {
 		this.ID = id;
 	}
-	public int getFuckingID() {
-		return ID;
-	}
 	
-	public Thread getThread() {
-		return t;
-	}
 	
-	public void setSequencer(mSequencer sequencer) {
-		this.seq= sequencer;
-	}
-	public void associateToThread(Thread thread, int threadID) {
-		ID = threadID;
-		t = thread;
-	}
-	public void addExternal(Message msg) {
-		externalQueue.add(msg);
-	}
-	public void addInternal(Message msg) {
-		internalQueue.add(msg);
-	}
-	
-	public void printInternalQueue() {
-		for(int i=0; i< internalQueue.size(); i++) {
-			System.out.println("Element "+i+": "+internalQueue.get(i).getPayload());
-		}
-	}
-	public void setFlagAwake(boolean value) {
-		flagAwake = value ;
-	}
-	
-	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
+	/**
+	 * This method runs automatically as a part of runnable classes.
+	 */
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
 		
-		PrintWriter writer = new PrintWriter( "/Users/ferielamira/Desktop/SS19/VS/logThread" + ID , "UTF-8");
-		for (Message msg : internalQueue) {
-			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
+		while (flagAwake == true) {
+			parseMsg();
 		}
-		writer.close();
-	}
-	public void sendToSeq(Message msg) {
-		msg.setType(0); //internal 
-		seq.add(msg);
 		
-	
+		try {
+			printLog();
+		} catch (FileNotFoundException e) {			
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}	
 	}
-	public void parseMsg() {
 
-		// We received a msg
+	/**
+	 * 
+	 */
+	private void parseMsg() {
+
 		if( externalQueue.size()!= 0) {
 			Message msg = externalQueue.pollLast();
 			System.out.println("Thread"+this.getFuckingID()+" received a message with id: "+ msg.getId()+"from client");
@@ -87,27 +77,65 @@ public class RecThread implements Runnable{
 					
 	}
 
-		
-
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		
-		
-		while (flagAwake == true) {
-			parseMsg();
-		}
-		
-		try {
-			printLog();
-		} catch (FileNotFoundException e) {			
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		
-		
+	
+	
+	
+	public void associateToThread(Thread thread, int threadID) {
+		ID = threadID;
+		t = thread;
 	}
 	
+	public void addExternal(Message msg) {
+		externalQueue.add(msg);
+	}
+	
+	public void addInternal(Message msg) {
+		internalQueue.add(msg);
+	}
+	
+	public void printInternalQueue() {
+		for(int i=0; i< internalQueue.size(); i++) {
+			System.out.println("Element "+i+": "+internalQueue.get(i).getPayload());
+		}
+	}
+	
+	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
+		
+		PrintWriter writer = new PrintWriter( "/Users/ferielamira/Desktop/SS19/VS/logThread" + ID , "UTF-8");
+		for (Message msg : internalQueue) {
+			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
+		}
+		writer.close();
+	}
 
+	public void sendToSeq(Message msg) {
+		msg.setType(0); //internal 
+		seq.add(msg);
+		
+	
+	}
+	
+	
+		
+
+
+	
+	
+	
+	// GETTERS AND SETTERS
+	public int getFuckingID() {
+		return ID;
+	}
+
+	public Thread getThread() {
+		return t;
+	}
+	
+	public void setSequencer(mSequencer sequencer) {
+		this.seq= sequencer;
+	}
+		
+	public void setFlagAwake(boolean value) {
+		flagAwake = value ;
+	}
 }
