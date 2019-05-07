@@ -13,8 +13,8 @@ import java.util.Queue;
 
 public class RecThread implements Runnable{
 	
-	
 	// VARIABLES
+	private final String PATH = "/Users/ferielamira/Desktop/SS19/VS/logThread";
 	private Thread t; // the actual thread
 	private mSequencer seq; // message sequencer instance
 	private int ID; // thread ID
@@ -101,7 +101,7 @@ public class RecThread implements Runnable{
 	
 	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
 		
-		PrintWriter writer = new PrintWriter( "/Users/ferielamira/Desktop/SS19/VS/logThread" + ID , "UTF-8");
+		PrintWriter writer = new PrintWriter( PATH + ID , "UTF-8");
 		for (Message msg : internalQueue) {
 			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
 		}

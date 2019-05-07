@@ -58,11 +58,11 @@ public class control {
 		
 		//set message sequencer's client to client instance
 		mSeqInstance.c=clientInstance;
-		clientThread.start();
 		
 		
 		// run sequence thread
 		seq.start();		
+		clientThread.start();
 		
 		
 		
