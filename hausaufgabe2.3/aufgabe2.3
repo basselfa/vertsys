@@ -1,0 +1,22 @@
+ 
+QUESTION 1:
+What kind of order would be implied by the vector clocks (total
+order/partial order)?:
+
+    nach definitions partial order (timestamps sind nicht immer sortierbar)
+
+
+QUESTION 2:
+Would the history of all threads be identical? If not, how would you
+test that the exposed histories of the threads are correct.
+
+    NO: kommen in unterschiedlicher reihenfolge an und lassen sich nicht anhand der timestanps sortieren. wenn message verzögert ankommt, verschiebt sich die ursprüngliche reihenfolge
+
+
+
+QUESTION 3:
+What are the advantages/disadvantages of using Lamport
+Timestamps or vector clocks?
+    
+    lamport: messages sortierbar (unter vernachlässigung von event-reihenfolge   informationen)
+    vektor:  events   sortierbar (unter vernachlässigung von message-reihenfolge informationen)
