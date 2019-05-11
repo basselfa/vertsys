@@ -12,99 +12,41 @@ import java.util.Queue;
  *when closed -> write history to log file*/
 
 public class RecThread implements Runnable{
-	private Thread t;
-
-	private int ID;
-	private int counter=0;
-	boolean flagAwake = true ;
 	
-	public LinkedList<Message> q = new LinkedList<>();
+	// VARIABLES
+	private final String PATH = "/home/users/m/magical_studies/irb-ubuntu/uni/VS(verteilteSysteme)/ergebnisse2.1/receivingTh";
+	private Thread t; // the actual thread
+	private mSequencer seq; // message sequencer instance
+	private int ID; // thread ID
+//	private int counter=0;
+	boolean flagAwake = true; // activity flag, used to terminate thread
+//	RecThread lock;
 	
+	public LinkedList<Message> externalQueue = new LinkedList<>(); // list of messages from clients handled
+	public LinkedList<Message> internalQueue = new LinkedList<>(); // list of messages from message sequencer... printed out at the end of the process
+	
+	
+	
+	
+	//METHODS
+	/**
+	 * builder for receiving thread, allocates a thread id
+	 * @param id thread id set by controller upon creation
+	 */
 	public RecThread(int id) {
 		this.ID = id;
 	}
-	public int getID() {
-		return ID;
-	}
 	
-	public Thread getThread() {
-		return t;
-	}
 	
-	public void associateToThread(Thread thread, int threadID) {
-		ID = threadID;
-		t = thread;
-	}
-	public void add(Message msg) {
-		q.add(msg);
-	}
-	
-	public void printQueue() {
-		for(int i=0; i< q.size(); i++) {
-			System.out.println("Element "+i+": "+q.get(i).getPayload());
-		}
-	}
-	public void setFlagAwake(boolean value) {
-		flagAwake = value ;
-	}
-	
-	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
-		
-		PrintWriter writer = new PrintWriter( "/home/bass/logs/logThread" + ID , "UTF-8");
-		for (Message msg : q) {
-			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
-		}
-		writer.close();
-	}
-	public void sendToSeq(Message msg) {
-		 // the id of the message will be set by the  sequencer
-		msg.setType(0); //internal 
-	//	seq.add(msg);
-		
-	
-	}
-	public boolean queueContainsMsg(Message msg) {
-		boolean contains=false;
-		for(int i=0; i< q.size()-1; i++) {
-			if(q.get(i).getPayload() == msg.getPayload()) {
-				contains=true;
-			}
-	
-		}
-		return contains;
-		
-		
-	}
+	/**
+	 * This method runs automatically as a part of runnable classes.
+	 */
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		System.out.println("Inside:"+ Thread.currentThread().getName());
-		// Thread work happens here
 		
 		while (flagAwake == true) {
-			
-			// We received a msg
-			if( counter < q.size()) {
-				Message msg = q.peekLast();
-				
-				//msg is external
-				if( msg.getType()==1) {
-					System.out.println("Thread received a messages");
-					sendToSeq(msg);				
-					counter++;
-				}
-				//msg is internal
-				else {
-					//check if we already have it in the queue and get rid of it 
-					if(queueContainsMsg(msg)){
-						//if yea, delete it
-						q.pollLast();
-						
-					}
-					
-				}
-			}	
-
+			parseMsg();
 		}
 		
 		try {
@@ -112,31 +54,88 @@ public class RecThread implements Runnable{
 		} catch (FileNotFoundException e) {			
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-		}
-		
-		
+			e.printStackTrace();
+		}	
 	}
-	
-	/*
-	pullQueue(){}
-	
-	receiveExternalMessage(X){
-		Message Y = createMessage(X);
-		sendMessageToSequencer(Y);
-	}
-	
-	receiveInternalMessage(X){
-		Stuff Z = extractMessage(Y);
-		storeMessage(Z);
-	}
-	
-	private void storeMessage(Z){};
-	
-	public boolean saveHistory(){
-		do stuff
-		return true;
-	}
-	*/
 
+	/**
+	 * 
+	 */
+	private void parseMsg() {
+
+		if( externalQueue.size()!= 0) {
+			Message msg = externalQueue.pollLast();
+			System.out.println("Thread"+this.getFuckingID()+" received a message with id: "+ msg.getId()+"from client");
+			sendToSeq(msg);				
+			System.out.println("Thread " + this.getFuckingID()  + " exiting.");
+			
+			synchronized(seq)
+			{		
+				seq.notify();
+			}
+		}
+					
+	}
+
+	
+	
+	
+	public void associateToThread(Thread thread, int threadID) {
+		ID = threadID;
+		t = thread;
+	}
+	
+	public void addExternal(Message msg) {
+		externalQueue.add(msg);
+	}
+	
+	public void addInternal(Message msg) {
+		internalQueue.add(msg);
+	}
+	
+	public void printInternalQueue() {
+		for(int i=0; i< internalQueue.size(); i++) {
+			System.out.println("Element "+i+": "+internalQueue.get(i).getPayload());
+		}
+	}
+	
+	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
+		
+		PrintWriter writer = new PrintWriter( PATH + ID , "UTF-8");
+		for (Message msg : internalQueue) {
+			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
+		}
+		writer.close();
+	}
+
+	public void sendToSeq(Message msg) {
+		msg.setType(0); //internal 
+		seq.add(msg);
+		
+	
+	}
+	
+	
+		
+
+
+	
+	
+	
+	// GETTERS AND SETTERS
+	public int getFuckingID() {
+		return ID;
+	}
+
+	public Thread getThread() {
+		return t;
+	}
+	
+	public void setSequencer(mSequencer sequencer) {
+		this.seq= sequencer;
+	}
+		
+	public void setFlagAwake(boolean value) {
+		flagAwake = value ;
+	}
 }

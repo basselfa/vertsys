@@ -5,47 +5,97 @@ import java.util.Random;
 
 /*sends random masseges with ints to single thread(external message)*/
 
-public class Client {
+public class client implements Runnable {
 	RecThread thread;
+	int numOfMessages;
+	int numOfThreads;
+	ArrayList<RecThread> list;
 	
+	/**
+	 * client builder
+	 * @param nMessages number of total messages the client sends
+	 * @param nThreads number of total receiving threads
+	 * @param rList an array list of all the receiving thread
+	 */
+	public client(int nMessages, int nThreads,ArrayList<RecThread>rList) {
+		numOfMessages=nMessages;
+		numOfThreads=nThreads;
+		list= rList ;
+		
+	}	
+	
+	/**
+	 * used to choose the id of the next receiver, to whom the client sends a message.
+	 * @param upperBound number of receiver threads for out purposes
+	 * @return random number between 2 and upperBound+1
+	 */
 	public int random(int upperBound) {
+		// initialize an instance of random class to use its methods
 		Random rand = new Random();
-		// Obtain a number between [0 - (numOfThreads-1) ].
+		// Obtain a number in the range of [0, numOfThreads-1].
 		int n = rand.nextInt(upperBound);
-		// Add 1 to the result to get a number from the required range
+		// Add 1 to the result to get a number from the required range of [1, numberOfThreads] (id range)
 		return n += 1;
 	}
 	
-	public void getRandomThread(int numOfThreads, ArrayList<RecThread> list) {
+	
+	/**
+	 * choose a random receiving thread for the client to send a message two.
+	 * @return the receiving thread to send the message to.
+	 */
+	public RecThread getRandomThread() {
+		//get a random ThreadID
 		int randThreadID = random(numOfThreads);
-		System.out.println("Client will be sending  messages to thread"+randThreadID);	
-		for(int j=0 ; j< list.size(); j++) {
-			if(list.get(j).getID() == randThreadID)
-				thread = list.get(j);
-		}
+		// return chosen thread from the receiving threads' list
+		return list.get(randThreadID-1);		
 	}
 	
-	public void sendRandomMsgs(int numOfMsgs) {
-		for(int i=0;i<numOfMsgs;i++) {
-			//get the right thread from RecThread List
-			int randMsg =random(1000);
-			Message msg = new Message(randMsg,1,i);
-			thread.add(msg);
+	
+	
+	/**
+	 * sends all the messages to the receiving threads
+	 * @throws InterruptedException
+	 */
+	public void sendRandomMsgs() throws InterruptedException {
+		
+		// send messages with i being the id of each message
+		for(int i=0;i<numOfMessages;i++) {
 			
+			// set message pay load to a random number in the range of [1, 1000]
+			int randMsg =random(1000);
+			
+			// initialize an external message with the correct pay load and its appropriate ID
+			Message msg = new Message(randMsg, Message.EXTERNAL, i);
+			
+			// get a random receiving thread
+			RecThread thread = getRandomThread();
+			
+			System.out.println("Client will be sending  message with id:"+msg.getId()+" to thread"+ thread.getFuckingID());	
+			// send message to chosen receiving thread
+			thread.addExternal(msg);
+
+			// ############# ??????????? ##############
+			/*synchronized(this) {
+				this.wait();
+			}*/
 		}	
 	}
-		
+
 	
-	public Client(int numOfMessages, int numOfThreads, ArrayList<RecThread> list) {
-		//pick random thread 
-		getRandomThread(numOfThreads,list);
+	/**
+	 * run thread sends messages and then terminates thread.
+	 */
+	@Override
+	public void run() {
+		
 		//send messages to thread
+		try {
+			sendRandomMsgs();
 		
-		//block 
-		sendRandomMsgs(numOfMessages);
-		//free
-		
-		
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 }
