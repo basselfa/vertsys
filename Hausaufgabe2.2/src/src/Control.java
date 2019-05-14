@@ -10,16 +10,16 @@ import java.util.concurrent.TimeUnit;
 public class Control {
 	
 	//make a list that contains all the threads 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) {
 	
         int numThreads = Integer.parseInt(args[0]);
         int numMessages = Integer.parseInt(args[1]);
         ArrayList<RecThread> recList = new ArrayList<RecThread>();
-        
-        MSequencer sequencer = new MSequencer();
-		Thread seqThread = new Thread(sequencer, "seq"); 
-		sequencer.associateToThread(seqThread);
-		sequencer.recList=recList;
+//old code
+//      MSequencer sequencer = new MSequencer();
+//		Thread seqThread = new Thread(sequencer, "seq"); 
+//		sequencer.associateToThread(seqThread);
+///		sequencer.recList=recList;
 		
 		
 		//TO DO: create an array list for the threads 
@@ -29,30 +29,44 @@ public class Control {
 			Thread thread = new Thread(rect,"t"+i);
 			//TO DO:add thread to the array list
 			rect.associateToThread(thread,i);
-			rect.setSequencer(sequencer);
+			rect.recList=recList;		//TODOdone: threads brauchen jetzt auch die thread-Liste
+//old code	rect.setSequencer(sequencer);
 			recList.add(rect);
 			thread.start();
 		}
 		
 		
-		
-		
 		Client client = new Client(numMessages, numThreads,recList);
 		Thread clientThread = new Thread(client,"client1");
 		
+//old code		
+//		sequencer.client=client;
+//		
+//		seqThread.start();
 		
-		sequencer.client=client;
 		clientThread.start();
-		seqThread.start();
+		
 		
 
 		while(clientThread.isAlive()) {;}
 		
 		for (RecThread recThread : recList) {
 			recThread.setFlagAwake(false);
-			recThread.getThread().join();
+			synchronized(recThread) {
+				recThread.notify();
+			}
+			
+//			try {
+//		         recThread.getThread().join();
+//		       
+//		      } catch ( Exception e) {
+//		         System.out.println("Thread Interrupted");
+//		      }
+				
 		} 
-		sequencer.setFlagAwake(false);
+//old code	sequencer.setFlagAwake(false);
+		
+		
 		
 	}
 	

@@ -1,4 +1,5 @@
 package src;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -13,11 +14,15 @@ import java.util.Queue;
 
 public class RecThread implements Runnable{
 	private Thread t;
-	private MSequencer seq;
+//old code	private MSequencer seq;
 	private int ID;
 	private int counter=0;
 	boolean flagAwake = true ;
 	RecThread lock;
+//TODOdone: new variables
+	ArrayList<RecThread> recList;	//speichert alle threads an die geschickt werden muss
+	private int time = 0; //thread eigene time
+
 	
 	public LinkedList<Message> externalQueue = new LinkedList<>();
 	public LinkedList<Message> internalQueue = new LinkedList<>();
@@ -32,10 +37,10 @@ public class RecThread implements Runnable{
 	public Thread getThread() {
 		return t;
 	}
-	
-	public void setSequencer(MSequencer sequencer) {
-		this.seq= sequencer;
-	}
+//old code
+//	public void setSequencer(MSequencer sequencer) {
+//		this.seq= sequencer;
+//	}
 	public void associateToThread(Thread thread, int threadID) {
 		ID = threadID;
 		t = thread;
@@ -44,7 +49,11 @@ public class RecThread implements Runnable{
 		externalQueue.add(msg);
 	}
 	public void addInternal(Message msg) {
-		internalQueue.add(msg);		//erstmal irgendwie reischreiben durcheinnander, später sortieren TODO: timestamp auslesen und aktiualisieren
+		internalQueue.add(msg);	//erstmal irgendwie reischreiben durcheinnander, später sortieren 
+		//TODOdone: timestamp auslesen und aktualisieren
+		if(msg.getTimeOfSenderThread() > this.time) {
+			this.time = msg.getTimeOfSenderThread();
+		}
 	}
 	
 	public void printInternalQueue() {
@@ -64,11 +73,12 @@ public class RecThread implements Runnable{
 		}
 		writer.close();
 	}
-	
-	public void sendToSeq(Message msg) {
-		msg.setType(0); //internal 
-		seq.add(msg);	
-	}
+//old code	
+//	public void sendToSeq(Message msg) {
+//		msg.setType(0); //internal 
+//		seq.addReceivedMsgs(msg);
+//		System.out.println("the size of seq msgs: "+ seq.receivedMsgs.size());
+//	}
 	
 	public void parseMsg() {
 
@@ -76,14 +86,17 @@ public class RecThread implements Runnable{
 		if( externalQueue.size()!= 0) {
 			Message msg = externalQueue.pollLast();
 			System.out.println("Thread"+this.getThreadID()+" received a message with id: "+ msg.getId()+"from client");
-			sendToSeq(msg);				//TODO: send to all threads
+//old code	sendToSeq(msg);			
+			//TODOdone: send to all threads	
+			sendToAllThreads(msg);
+			//TODOdone: timer wird erhöht für nächstes empfangen
+			this.time++;
 			System.out.println("Thread " + this.getThreadID()  + " exiting.");
-			//TODO: set timestamp
-			//TODO: broadcast to other threads
-			synchronized(seq)
-			{		
-				seq.notify();
-			}
+			//TODO: broadcast to other threads //bin mir nicht mehr sicher was wir mit diesem kommentar meinen. wurde ja schon geschickt...kann weg?
+//			synchronized(seq)
+//			{		
+//				seq.notify();
+//			}
 		}
 					
 	}
@@ -91,11 +104,21 @@ public class RecThread implements Runnable{
 		
 
 	@Override
-	public void run() {
-		// TODO Auto-generated method stub
+	public void run() {		//TODO: client wird jetzt nicht mehr vom sequencer notified. muss hier gemacht werden?
+		// TO DO Auto-generated method stub
 		
 		while (flagAwake == true) {
+			synchronized(this) {
+				try {
+					this.wait();
+				} catch (InterruptedException e) {
+					// TO DO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			parseMsg();
+			
+			
 		}
 		
 		try {
@@ -103,10 +126,19 @@ public class RecThread implements Runnable{
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {			
 			e.printStackTrace();
 		}
+		System.out.println("thread terminated");
 		
 		
 	}
-	
+	//TODOdone: new funktion sendToAllThreads
+	public void sendToAllThreads(Message msg) {
+		//TODOdone: set timestamp
+		msg.setTimestamp(ID, time);
+		for(RecThread tmpRecv : recList) {
+			tmpRecv.addInternal(msg);
+		}
+	}
+
 	//TODO: new function sort (comparable)
 	
 
