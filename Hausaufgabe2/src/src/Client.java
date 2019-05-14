@@ -41,7 +41,9 @@ public class Client implements Runnable {
 			RecThread thread = getRandomThread() ;
 			System.out.println("Client will be sending  message with id:"+msg.getId()+" to thread"+ thread.getThreadID());	
 			thread.addExternal(msg);
-
+			synchronized(thread) {
+				thread.notify();
+			}
 			synchronized(this) {
 				this.wait();
 			}
@@ -59,6 +61,7 @@ public class Client implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		System.out.println("client terminated");
 	}
 
 }

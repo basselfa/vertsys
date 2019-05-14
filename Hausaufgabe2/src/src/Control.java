@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class Control {
 	
 	//make a list that contains all the threads 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) {
 	
         int numThreads = Integer.parseInt(args[0]);
         int numMessages = Integer.parseInt(args[1]);
@@ -35,24 +35,37 @@ public class Control {
 		}
 		
 		
-		
-		
 		Client client = new Client(numMessages, numThreads,recList);
 		Thread clientThread = new Thread(client,"client1");
 		
 		
 		sequencer.client=client;
-		clientThread.start();
+		
 		seqThread.start();
+		
+		clientThread.start();
+		
 		
 
 		while(clientThread.isAlive()) {;}
 		
 		for (RecThread recThread : recList) {
 			recThread.setFlagAwake(false);
-			recThread.getThread().join();
+			synchronized(recThread) {
+				recThread.notify();
+			}
+			
+//			try {
+//		         recThread.getThread().join();
+//		       
+//		      } catch ( Exception e) {
+//		         System.out.println("Thread Interrupted");
+//		      }
+				
 		} 
 		sequencer.setFlagAwake(false);
+		
+		
 		
 	}
 	

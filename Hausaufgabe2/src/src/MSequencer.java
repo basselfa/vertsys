@@ -16,12 +16,12 @@ public class MSequencer implements Runnable {
 	
 	private int counter=0; //Anzahl der bearbeitete msgs
 	public LinkedList<Message> receivedMsgs = new LinkedList<>();
-	
+	public LinkedList<Message> Msgs = new LinkedList<>();
 	public void associateToThread(Thread thread) {
 		t = thread;
 	}
 	
-	public void add(Message msg) {
+	public void addReceivedMsgs(Message msg) {
 		receivedMsgs.add(msg);
 	}
 	public void setFlagAwake(boolean value) {
@@ -39,8 +39,12 @@ public class MSequencer implements Runnable {
 	public void informReceivers(Message msg) throws InterruptedException {
 		for(RecThread tmpRecv : recList) {
 			tmpRecv.addInternal(msg);
+//			synchronized(tmpRecv){	
+//				tmpRecv.notify();
+//			}
+			//this.t.sleep(50);
+		//	counter++;
 		}	
-		counter++;
 	}
 	
 	
@@ -48,20 +52,33 @@ public class MSequencer implements Runnable {
 	public void run() {
 		try {
 			while(flagAwake==true) {
-				//we received a message 
-				if(counter < receivedMsgs.size()) {
+
+				while(receivedMsgs.isEmpty() && flagAwake==true) {
+					Thread.sleep(5);
+					}
+				
+				if(flagAwake==true) {
 					System.out.println("Sequencer received a message with id: "+ receivedMsgs.peekLast().getId()+" and is broadcasting it to all threads");
 					//broadcast message to everyone
-					informReceivers(receivedMsgs.peekLast());
+					informReceivers(receivedMsgs.pollLast());
 					synchronized(client){	
 						client.notify();
 					}
 				}
+				
+			}
+			System.out.println("Sequencer knows the flag is false");
+			for(RecThread tmpRecv : recList) {
+				synchronized(tmpRecv){	
+					tmpRecv.notify();
+				}
+				
 			}
 			printLog();
 		} catch (FileNotFoundException | UnsupportedEncodingException | InterruptedException e) {			
 			e.printStackTrace();
 		} 
+		System.out.println("Sequencer terminated");
 		
 		
 	}

@@ -67,7 +67,8 @@ public class RecThread implements Runnable{
 	
 	public void sendToSeq(Message msg) {
 		msg.setType(0); //internal 
-		seq.add(msg);	
+		seq.addReceivedMsgs(msg);
+		System.out.println("the size of seq msgs: "+ seq.receivedMsgs.size());
 	}
 	
 	public void parseMsg() {
@@ -79,10 +80,10 @@ public class RecThread implements Runnable{
 			sendToSeq(msg);				
 			System.out.println("Thread " + this.getThreadID()  + " exiting.");
 			
-			synchronized(seq)
-			{		
-				seq.notify();
-			}
+//			synchronized(seq)
+//			{		
+//				seq.notify();
+//			}
 		}
 					
 	}
@@ -94,7 +95,17 @@ public class RecThread implements Runnable{
 		// TODO Auto-generated method stub
 		
 		while (flagAwake == true) {
+			synchronized(this) {
+				try {
+					this.wait();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			parseMsg();
+			
+			
 		}
 		
 		try {
@@ -102,6 +113,7 @@ public class RecThread implements Runnable{
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {			
 			e.printStackTrace();
 		}
+		System.out.println("thread terminated");
 		
 		
 	}
