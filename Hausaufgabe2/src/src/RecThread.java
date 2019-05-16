@@ -19,8 +19,12 @@ public class RecThread implements Runnable{
 	boolean flagAwake = true ;
 	RecThread lock;
 	
-	public LinkedList<Message> externalQueue = new LinkedList<>();
-	public LinkedList<Message> internalQueue = new LinkedList<>();
+	public volatile LinkedList<Message> externalQueue = new LinkedList<>();
+	public volatile LinkedList<Message> internalQueue = new LinkedList<>();
+	
+	public void justEndIt() {
+		this.t.interrupt();
+	}
 	
 	public RecThread(int id) {
 		this.ID = id;
@@ -115,7 +119,8 @@ public class RecThread implements Runnable{
 		}
 		System.out.println("thread terminated");
 		
-		
+		while(this.t.isInterrupted() == false) { continue; }
+
 	}
 	
 

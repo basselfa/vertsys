@@ -15,8 +15,8 @@ public class MSequencer implements Runnable {
 	ArrayList<RecThread> recList;
 	
 	private int counter=0; //Anzahl der bearbeitete msgs
-	public LinkedList<Message> receivedMsgs = new LinkedList<>();
-	public LinkedList<Message> Msgs = new LinkedList<>();
+	public volatile LinkedList<Message> receivedMsgs = new LinkedList<>();
+	public volatile LinkedList<Message> Msgs = new LinkedList<>();
 	public void associateToThread(Thread thread) {
 		t = thread;
 	}
@@ -54,8 +54,9 @@ public class MSequencer implements Runnable {
 			while(flagAwake==true) {
 
 				while(receivedMsgs.isEmpty() && flagAwake==true) {
-					Thread.sleep(5);
-					}
+//					Thread.sleep(1);
+					continue;
+				}
 				
 				if(flagAwake==true) {
 					System.out.println("Sequencer received a message with id: "+ receivedMsgs.peekLast().getId()+" and is broadcasting it to all threads");

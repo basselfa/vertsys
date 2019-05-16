@@ -65,7 +65,16 @@ public class Control {
 		} 
 		sequencer.setFlagAwake(false);
 		
-		
+		try {
+			TimeUnit.SECONDS.sleep(4);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("ending threads");
+		for (RecThread recThread : recList) {
+			recThread.justEndIt();
+		}
 		
 	}
 	

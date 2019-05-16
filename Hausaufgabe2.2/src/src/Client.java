@@ -44,9 +44,9 @@ public class Client implements Runnable {
 			synchronized(thread) {
 				thread.notify();
 			}
-			synchronized(this) {
-				this.wait();
-			}
+//			synchronized(this) {
+//				this.wait();
+//			}
 		}	
 	}
 		

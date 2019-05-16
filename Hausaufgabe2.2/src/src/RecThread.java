@@ -1,5 +1,7 @@
 package src;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -17,15 +19,16 @@ public class RecThread implements Runnable{
 //old code	private MSequencer seq;
 	private int ID;
 	private int counter=0;
-	boolean flagAwake = true ;
 	RecThread lock;
+	boolean flagAwake = true ;
+
 //TODOdone: new variables
 	ArrayList<RecThread> recList;	//speichert alle threads an die geschickt werden muss
 	private int time = 0; //thread eigene time
 
 	
-	public LinkedList<Message> externalQueue = new LinkedList<>();
-	public LinkedList<Message> internalQueue = new LinkedList<>();
+	public volatile LinkedList<Message> externalQueue = new LinkedList<>();
+	public volatile LinkedList<Message> internalQueue = new LinkedList<>();
 	
 	public RecThread(int id) {
 		this.ID = id;
@@ -64,10 +67,14 @@ public class RecThread implements Runnable{
 	public void setFlagAwake(boolean value) {
 		flagAwake = value ;
 	}
+
+	public void justEndIt() {
+		this.t.interrupt();
+	}
 	
 	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
 		//TODO: sort
-		PrintWriter writer = new PrintWriter( "/home/users/m/magical_studies/irb-ubuntu/uni/VS(verteilteSysteme)/ergebnisse2.1/logThread" + ID , "UTF-8");
+		PrintWriter writer = new PrintWriter( "/home/makrude/Desktop/ergebnisse2.2/logThread" + ID , "UTF-8");
 		for (Message msg : internalQueue) {
 			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
 		}
@@ -107,7 +114,7 @@ public class RecThread implements Runnable{
 	public void run() {		//TODO: client wird jetzt nicht mehr vom sequencer notified. muss hier gemacht werden?
 		// TO DO Auto-generated method stub
 		
-		while (flagAwake == true) {
+		while (this.flagAwake == true) {
 			synchronized(this) {
 				try {
 					this.wait();
@@ -128,8 +135,14 @@ public class RecThread implements Runnable{
 		}
 		System.out.println("thread terminated");
 		
+			
+		Collections.sort(internalQueue);
 		
+		
+		while(this.t.isInterrupted() == false) { continue; }
 	}
+	
+	
 	//TODOdone: new funktion sendToAllThreads
 	public void sendToAllThreads(Message msg) {
 		//TODOdone: set timestamp
@@ -139,7 +152,8 @@ public class RecThread implements Runnable{
 		}
 	}
 
-	//TODO: new function sort (comparable)
+
 	
 
 }
+ 
