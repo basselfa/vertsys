@@ -74,7 +74,7 @@ public class RecThread implements Runnable{
 	
 	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
 		//TODO: sort
-		PrintWriter writer = new PrintWriter( "/home/makrude/Desktop/ergebnisse2.2/logThread" + ID , "UTF-8");
+		PrintWriter writer = new PrintWriter( "/home/users/m/magical_studies/irb-ubuntu/uni/VS(verteilteSysteme)/ergebnisse2.1/logThread" + ID , "UTF-8");
 		for (Message msg : internalQueue) {
 			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
 		}
