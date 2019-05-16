@@ -55,7 +55,7 @@ public class MSequencer implements Runnable {
 
 				while(receivedMsgs.isEmpty() && flagAwake==true) {
 
-					Thread.sleep(1);
+					Thread.sleep(3);
 					continue;
 				}
 				
