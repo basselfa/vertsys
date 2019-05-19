@@ -75,7 +75,7 @@ public class RecThread implements Runnable{
 	
 	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
 		//TODO: sort
-		//wait for all threads to finish writing
+		//tododone: wait for all threads to finish writing
 		try {
 			TimeUnit.SECONDS.sleep(1);
 		} catch (InterruptedException e) {
