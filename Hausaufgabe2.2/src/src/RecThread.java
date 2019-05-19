@@ -8,8 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.LinkedList; 
-import java.util.Queue;
-import java.util.concurrent.TimeUnit; 
+import java.util.Queue; 
 
 /*receives external message -> forward to sequencer
  *receives internal message -> store in local history
@@ -75,14 +74,6 @@ public class RecThread implements Runnable{
 	
 	public void printLog() throws FileNotFoundException, UnsupportedEncodingException {
 		//TODO: sort
-		//tododone: wait for all threads to finish writing
-		try {
-			TimeUnit.SECONDS.sleep(1);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
 		PrintWriter writer = new PrintWriter( "/home/users/m/magical_studies/irb-ubuntu/uni/VS(verteilteSysteme)/ergebnisse2.1/logThread" + ID , "UTF-8");
 		for (Message msg : internalQueue) {
 			writer.println(msg.getId() + "  " +msg.getPayload())	;	;	
