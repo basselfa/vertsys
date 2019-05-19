@@ -38,7 +38,7 @@ public class Control {
 		
 		Client client = new Client(numMessages, numThreads,recList);
 		Thread clientThread = new Thread(client,"client1");
-		
+		client.t=clientThread;
 //old code		
 //		sequencer.client=client;
 //		
@@ -49,6 +49,7 @@ public class Control {
 		
 
 		while(clientThread.isAlive()) {;}
+	
 		
 		for (RecThread recThread : recList) {
 			recThread.setFlagAwake(false);

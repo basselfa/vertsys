@@ -128,16 +128,15 @@ public class RecThread implements Runnable{
 			
 		}
 		
+		
+		Collections.sort(internalQueue);
+
 		try {
 			printLog();
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {			
 			e.printStackTrace();
 		}
-		System.out.println("thread terminated");
-		
-			
-		Collections.sort(internalQueue);
-		
+		System.out.println("thread terminated");		
 		
 		while(this.t.isInterrupted() == false) { continue; }
 	}

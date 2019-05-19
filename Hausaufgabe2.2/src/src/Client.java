@@ -10,7 +10,7 @@ public class Client implements Runnable {
 	int numOfMessages;
 	int numOfThreads;
 	ArrayList<RecThread> list;
-	
+	Thread t;
 	
 	public Client(int nMessages, int nThreads,ArrayList<RecThread>rList) {
 		numOfMessages=nMessages;
@@ -44,6 +44,7 @@ public class Client implements Runnable {
 			synchronized(thread) {
 				thread.notify();
 			}
+			this.t.sleep(3);
 //			synchronized(this) {
 //				this.wait();
 //			}
