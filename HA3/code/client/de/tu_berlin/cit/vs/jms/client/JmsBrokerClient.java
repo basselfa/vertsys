@@ -26,6 +26,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 
 public class JmsBrokerClient {
+	private String clientName;	//i added this because it was missing somehow
     public JmsBrokerClient(String clientName) throws JMSException {
         this.clientName = clientName;
         
