@@ -6,6 +6,7 @@ import java.util.Random;
 /*sends random masseges with ints to single thread(external message)*/
 
 public class Client implements Runnable {
+	Thread t;
 	RecThread thread;
 	int numOfMessages;
 	int numOfThreads;
@@ -47,6 +48,7 @@ public class Client implements Runnable {
 			synchronized(this) {
 				this.wait();
 			}
+
 		}	
 	}
 		

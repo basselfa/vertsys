@@ -37,9 +37,12 @@ public class Control {
 		
 		Client client = new Client(numMessages, numThreads,recList);
 		Thread clientThread = new Thread(client,"client1");
-		
+		client.t = clientThread;
 		
 		sequencer.client=client;
+		for(RecThread rect : recList) {
+			rect.client = client;
+		}
 		
 		seqThread.start();
 		

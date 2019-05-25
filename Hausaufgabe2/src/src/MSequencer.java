@@ -63,9 +63,9 @@ public class MSequencer implements Runnable {
 					System.out.println("Sequencer received a message with id: "+ receivedMsgs.peekLast().getId()+" and is broadcasting it to all threads");
 					//broadcast message to everyone
 					informReceivers(receivedMsgs.pollLast());
-					synchronized(client){	
-						client.notify();
-					}
+//					synchronized(client){	
+//						client.notify();
+//					}
 				}
 				
 			}

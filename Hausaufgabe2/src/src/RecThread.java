@@ -18,6 +18,8 @@ public class RecThread implements Runnable{
 	private int counter=0;
 	boolean flagAwake = true ;
 	RecThread lock;
+	public Client client;
+
 	
 	public volatile LinkedList<Message> externalQueue = new LinkedList<>();
 	public volatile LinkedList<Message> internalQueue = new LinkedList<>();
@@ -78,11 +80,11 @@ public class RecThread implements Runnable{
 	public void parseMsg() {
 
 		// We received a msg
-		if( externalQueue.size()!= 0) {
+		while( externalQueue.size()!= 0) {
 			Message msg = externalQueue.pollLast();
 			System.out.println("Thread"+this.getThreadID()+" received a message with id: "+ msg.getId()+"from client");
 			sendToSeq(msg);				
-			System.out.println("Thread " + this.getThreadID()  + " exiting.");
+			System.out.println("Thread " + this.getThreadID()  + " finished publishing.");
 			
 //			synchronized(seq)
 //			{		
@@ -108,8 +110,15 @@ public class RecThread implements Runnable{
 				}
 			}
 			parseMsg();
-			
-			
+			try {
+				Thread.sleep(1);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			synchronized(client){	
+				client.notify();
+			}
 		}
 		
 		try {
