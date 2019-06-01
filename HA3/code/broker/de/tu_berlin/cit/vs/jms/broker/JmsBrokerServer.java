@@ -18,7 +18,7 @@ public class JmsBrokerServer {
             
             SimpleBroker broker = new SimpleBroker(stocks);
            
-           if( System.in.read()!= "stop");
+            System.in.read();
             
             broker.stop();
         } catch (JMSException ex) {

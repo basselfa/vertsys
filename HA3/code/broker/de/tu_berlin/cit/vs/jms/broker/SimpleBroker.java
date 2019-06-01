@@ -12,6 +12,7 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
+import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
@@ -38,9 +39,9 @@ public class SimpleBroker {
     Session brokerSession = null;
     Queue registerQueue = null;
     MessageConsumer brokerConsumer = null ;
-    private ConcurrentHashMap<String, Topic> TopicsMap = new ConcurrentHashMap<String, Topic>();
-    private ConcurrentHashMap<String, Queue> InputQueueMap = new ConcurrentHashMap<String, Queue>();
-    private ConcurrentHashMap<String, Queue> OutputQueueMap = new ConcurrentHashMap<String, Queue>();
+    private ConcurrentHashMap<String, MessageProducer> TopicsMap = new ConcurrentHashMap<String, MessageProducer>();
+    private ConcurrentHashMap<String, MessageConsumer> InputQueueMap = new ConcurrentHashMap<String, MessageConsumer>();
+    private ConcurrentHashMap<String, MessageProducer> OutputQueueMap = new ConcurrentHashMap<String, MessageProducer>();
   
     
     private final MessageListener listener = new MessageListener() {
@@ -113,11 +114,11 @@ public class SimpleBroker {
         brokerSession = brokerConnection.createSession(false, brokerSession.AUTO_ACKNOWLEDGE);
         registerQueue = brokerSession.createQueue("registerQueue");
         brokerConsumer = brokerSession.createConsumer(registerQueue);
-        brokerConsumer.setMessageListner(listener);        
+        brokerConsumer.setMessageListener(listener);        
     	//initialize hash table for queue x2
         for(Stock stock : stockList) {
             /* TODO: prepare stocks as topics */
-        	TopicsMap.put(stock,brokerSession.createTopic(stock.getName()));
+        	TopicsMap.put(stock.getName(),brokerSession.createProducer(brokerSession.createTopic(stock.getName())));
         }
      
     }
