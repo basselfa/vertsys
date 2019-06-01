@@ -14,7 +14,10 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
+import javax.jms.Queue;
 import javax.jms.Session;
+import javax.jms.Topic;
+
 import de.tu_berlin.cit.vs.jms.common.BuyMessage;
 import de.tu_berlin.cit.vs.jms.common.ListMessage;
 import de.tu_berlin.cit.vs.jms.common.RegisterMessage;
@@ -26,11 +29,53 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 
 public class JmsBrokerClient {
-	private String clientName;	//i added this because it was missing somehow
+	private String clientName;	//I added this because it was missing somehow
+	ActiveMQConnectionFactory clientCF = null;
+    Connection clientConnection = null;
+    Session clientSession = null;
+    
+    Queue registerQueue = null;
+    MessageProducer registerProducer = null;
+    
+    Queue inputQueue = null;
+    MessageProducer inputProducer = null;
+    
+    Queue outputQueue = null;
+    MessageConsumer outputConsumer = null;
+	
     public JmsBrokerClient(String clientName) throws JMSException {
         this.clientName = clientName;
         
         /* TODO: initialize connection, sessions, consumer, producer, etc. */
+        
+    	ActiveMQConnectionFactory clientCF = new ActiveMQConnectionFactory("tcp://localhost:61616");
+        Connection clientConnection = clientCF.createConnection();
+        clientConnection.start();
+        Session clientSession = clientConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        
+        registerQueue = clientSession.createQueue("registerQueue");
+        registerProducer = clientSession.createProducer(registerQueue);
+        
+        setInputQueue(this.clientName + "InputQueue");
+        setOutputQueue(this.clientName + "OutputQueue");
+        
+    }
+    //all receiving in the function can be synchronous
+    //
+    
+    //new function register: sends a message to the server with its name (this one should be done)
+    public void register() throws JMSException {
+    	RegisterMessage registerMessage = new RegisterMessage(this.clientName);
+    	ObjectMessage msg = clientSession.createObjectMessage(registerMessage);
+    	registerProducer.send(msg);
+    }
+    
+    //new function unregister
+    public void unregister() throws JMSException {
+        //TODO
+    	RegisterMessage unregisterMessage = new RegisterMessage(this.clientName);
+    	ObjectMessage msg = clientSession.createObjectMessage(unregisterMessage);
+    	inputProducer.send(msg);
     }
     
     public void requestList() throws JMSException {
@@ -45,8 +90,10 @@ public class JmsBrokerClient {
         //TODO
     }
     
-    public void watch(String stockName) throws JMSException {
-        //TODO	//you will receive a message with the name of the topic. then you have to register to the topic(folien. queue durch topic ersetzen)
+    public void watch(String stockName) throws JMSException {	
+    	createNewTopic(stockName);
+    	//send message to server
+    	
     }
     
     public void unwatch(String stockName) throws JMSException {
@@ -56,6 +103,22 @@ public class JmsBrokerClient {
     public void quit() throws JMSException {
         //TODO
     }
+    
+    public void setInputQueue(String queueName) throws JMSException {
+      	inputQueue = clientSession.createQueue(queueName);
+        inputProducer = clientSession.createProducer(inputQueue);
+    }
+    
+    public void setOutputQueue(String queueName) throws JMSException {
+    	outputQueue = clientSession.createQueue(queueName);
+        outputConsumer = clientSession.createConsumer(outputQueue);
+    }
+    
+    public void createNewTopic(String topicName) throws JMSException {
+        //TODO
+    	Topic topic = clientSession.createTopic(topicName + "Topic");
+    	MessageConsumer topicConsumer = clientSession.createConsumer(topic);
+    }  
     
     /**
      * @param args the command line arguments

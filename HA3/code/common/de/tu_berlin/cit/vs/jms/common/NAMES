@@ -1,0 +1,9 @@
+here all static names:
+
+QUEUES:
+"registerQueue"
+clientName + "InputQueue"		//example: "client1InputQueue"
+clientName + "OutputQueue"		//example: "client2OutputQueue"
+
+TOPICS:
+stockName + "Topic" 			//example: "FLUNDERTopic"
