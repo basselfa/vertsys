@@ -35,8 +35,11 @@ public class SimpleBroker {
     public SimpleBroker(List<Stock> stockList) throws JMSException {
         /* TODO: initialize connection, sessions, etc. */
         
+    	//initialize hash table for queue x2
         for(Stock stock : stockList) {
             /* TODO: prepare stocks as topics */
+        	
+        	//initialize hash table for topics
         }
     }
     

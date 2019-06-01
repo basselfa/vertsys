@@ -46,7 +46,7 @@ public class JmsBrokerClient {
     }
     
     public void watch(String stockName) throws JMSException {
-        //TODO
+        //TODO	//you will receive a message with the name of the topic. then you have to register to the topic(folien. queue durch topic ersetzen)
     }
     
     public void unwatch(String stockName) throws JMSException {

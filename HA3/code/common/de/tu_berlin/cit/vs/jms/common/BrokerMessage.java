@@ -15,7 +15,7 @@ public abstract class BrokerMessage implements Serializable {
     }
     
     public enum Type {
-        SYSTEM_REGISTER,
+        SYSTEM_REGISTER,		//send name of queues for client
         SYSTEM_UNREGISTER,
         SYSTEM_ERROR,
         
