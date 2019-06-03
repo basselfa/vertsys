@@ -43,11 +43,16 @@ public class SimpleBroker {
     Session brokerSession = null;
     Queue registerQueue = null;
     MessageConsumer brokerConsumer = null ;
-    private ConcurrentHashMap<String, MessageProducer> TopicsMap = new ConcurrentHashMap<String, MessageProducer>();
+    private ConcurrentHashMap<String, Stock> stocksTabelle = new ConcurrentHashMap<String, Stock>();
+    private ConcurrentHashMap<String, Topic> topicsTabelle = new ConcurrentHashMap<String, Topic>();
+    private ConcurrentHashMap<Topic, MessageProducer> topicsProducerTabelle = new ConcurrentHashMap<Topic, MessageProducer>();
+ //   private ConcurrentHashMap<String, MessageProducer> TopicsMap = new ConcurrentHashMap<String, MessageProducer>();
+    
     private ConcurrentHashMap<String, MessageConsumer> InputQueueMap = new ConcurrentHashMap<String, MessageConsumer>();
+    
     private ConcurrentHashMap<String, MessageProducer> OutputQueueMap = new ConcurrentHashMap<String, MessageProducer>();
     private List<Stock> stocksList = new ArrayList<Stock>();
-  
+    List<Stock> stockList = new ArrayList<>();
     
     private final MessageListener listener = new MessageListener() {
         @Override
@@ -68,10 +73,26 @@ public class SimpleBroker {
 	   			   RegisterMessage rm = (RegisterMessage) msgParsed;
 	   			   String client = rm.getClientName();
 	   			   System.out.println("Received: " + client);
-	   			   MessageConsumer tmp = brokerSession.createConsumer(brokerSession.createQueue(client+ "InputQueue")) ; 
-	   			   tmp.setMessageListener(listener);
+	   			    MessageConsumer tmp = null;
+					try {
+						tmp = brokerSession.createConsumer(brokerSession.createQueue(client+ "InputQueue"));
+					} catch (JMSException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} 
+	   			   try {
+					tmp.setMessageListener(listener);
+				} catch (JMSException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	   			   InputQueueMap.put(client,tmp);
-	   			   OutputQueueMap.put(client,brokerSession.createProducer(brokerSession.createQueue(client + "OutputQueue")));
+	   			   try {
+					OutputQueueMap.put(client,brokerSession.createProducer(brokerSession.createQueue(client + "OutputQueue")));
+				} catch (JMSException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 	   			 
 	   			}
 	   			else if (msgParsed instanceof UnregisterMessage) 
@@ -86,22 +107,58 @@ public class SimpleBroker {
 	   			else if (msgParsed instanceof SellMessage) 
 	   			{
 	   				SellMessage sm = (SellMessage) msgParsed;
+	   				
+	   				
+	   				
+					try {
+						if(sell(sm.getStockName(),sm.getAmount())== -1 )
+						{
+							System.out.println("not enough Stocks");
+						
+						}
+					} catch (JMSException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 	   			}
 	   			else if (msgParsed instanceof RequestListMessage) 
 	   			{
 	   				RequestListMessage rlm = (RequestListMessage) msgParsed;
-	   			}
-	   			else if (msgParsed instanceof ListMessage) 
-	   			{
-	   				ListMessage lm = (ListMessage) msgParsed;
+	   				ListMessage lm = new ListMessage(stockList);
+	   				ObjectMessage tmp=null;
+					try {
+						tmp = brokerSession.createObjectMessage(lm);
+					} catch (JMSException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+	   				try {
+						OutputQueueMap.get(rlm.getClientName()).send(tmp);
+					} catch (JMSException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} ; 
 	   			}
 	   			else if (msgParsed instanceof BuyMessage) 
 	   			{
 	   				BuyMessage bm = (BuyMessage) msgParsed;
+	   				try {
+						if(buy(bm.getStockName(),bm.getAmount())== -1 )
+						{
+							System.out.println("not enough Stocks");
+						
+						}
+					} catch (JMSException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 	   			}
 	   			else if (msgParsed instanceof WatchMessage) 
 	   			{
 	   				WatchMessage wm = (WatchMessage) msgParsed;
+	   				
 	   			}
 	   			else if (msgParsed instanceof UnWatchMessage) 
 	   			{
@@ -115,7 +172,7 @@ public class SimpleBroker {
     
     public SimpleBroker(List<Stock> stockList) throws JMSException {
         /* TODO: initialize connection, sessions, etc. */
-    	brokerCF = new ActiveMQConnectionFactory("vm://localhost");
+    	brokerCF = new ActiveMQConnectionFactory( "tcp://localhost:61616");
         brokerConnection = brokerCF.createConnection();
         brokerConnection.start();
         brokerSession = brokerConnection.createSession(false, brokerSession.AUTO_ACKNOWLEDGE);
@@ -123,10 +180,14 @@ public class SimpleBroker {
         brokerConsumer = brokerSession.createConsumer(registerQueue);
         brokerConsumer.setMessageListener(listener);        
     	//initialize hash table for queue x2
+        this.stockList= stockList;
         for(Stock stock : stockList) {
             /* TODO: prepare stocks as topics */
-        	TopicsMap.put(stock.getName(),brokerSession.createProducer(brokerSession.createTopic(stock.getName())));
-        	stocksList.add(stock);
+        	Topic topicTmp = brokerSession.createTopic(stock.getName()) ;
+        	topicsTabelle.put(stock.getName(),topicTmp);
+        	topicsProducerTabelle.put(topicTmp,brokerSession.createProducer(topicTmp));
+        	stocksTabelle.put(stock.getName(),stock);
+        	
         }
      
     }
@@ -136,17 +197,34 @@ public class SimpleBroker {
     }
     
     public synchronized int buy(String stockName, int amount) throws JMSException {
-        //TODO
-        return -1;
+    	Stock stock = stocksTabelle.get(stockName) ;
+    
+    	stock.setAvailableCount(stock.getAvailableCount()+ amount); 
+    	return 0 ; 
+        
     }
     
+    /**
+     * it adds amount to stock count of stockName
+     * test the parameters before calling this method
+     * @param stockName
+     * @param amount
+     * @return
+     * @throws JMSException
+     */
     public synchronized int sell(String stockName, int amount) throws JMSException {
         //TODO
-        return -1;
+    	Stock stock = stocksTabelle.get(stockName) ;
+    	if (amount > stock.getAvailableCount() ) 
+    		return -1;
+    	
+    	stock.setAvailableCount(stock.getAvailableCount()- amount); 
+    	return 0 ; 
+        
     }
     
     public synchronized List<Stock> getStockList() {
-        List<Stock> stockList = new ArrayList<>();
+        
 
         /* TODO: populate stockList */
 
