@@ -4,7 +4,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.jms.Connection;
@@ -24,12 +27,16 @@ import de.tu_berlin.cit.vs.jms.common.RegisterMessage;
 import de.tu_berlin.cit.vs.jms.common.RequestListMessage;
 import de.tu_berlin.cit.vs.jms.common.SellMessage;
 import de.tu_berlin.cit.vs.jms.common.Stock;
+import de.tu_berlin.cit.vs.jms.common.UnWatchMessage;
 import de.tu_berlin.cit.vs.jms.common.UnregisterMessage;
+import de.tu_berlin.cit.vs.jms.common.UpdatesMessage;
+import de.tu_berlin.cit.vs.jms.common.WatchMessage;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 
 public class JmsBrokerClient {
-	private String clientName;	//I added this because it was missing somehow
+	private static String clientName;	//I added this because it was missing somehow
 	ActiveMQConnectionFactory clientCF = null;
     Connection clientConnection = null;
     Session clientSession = null;
@@ -42,26 +49,63 @@ public class JmsBrokerClient {
     
     Queue outputQueue = null;
     MessageConsumer outputConsumer = null;
+    private ConcurrentHashMap<String, MessageConsumer> topicsTabelle = new ConcurrentHashMap<String, MessageConsumer>();
+    private List<Stock> stocksList = null ;
+
+    
+    private final MessageListener listener = new MessageListener() {
+        @Override
+        public void onMessage(Message msg) {
+            if(msg instanceof ObjectMessage) {
+            	Object msgParsed = null;
+	   			 try 
+	   			 {
+	   			     msgParsed = ((ObjectMessage) msg).getObject();
+	   			
+	   			 } 
+	   			 catch (JMSException ex) 
+	   			 {
+	   			     System.err.println("Error  " + ex.getMessage());
+	   			 }
+	   			if(msgParsed instanceof ListMessage)
+	            {
+	   				ListMessage lm =  (ListMessage) msgParsed;
+	   				stocksList= lm.getStocks();
+	   			
+	   				
+	   			}
+	   			else if(msgParsed instanceof UpdatesMessage)
+	            { 
+	   				UpdatesMessage um = (UpdatesMessage) msgParsed ; 
+	   				
+	   			} 
+            }
+        }
+    };
+    
 	
     public JmsBrokerClient(String clientName) throws JMSException {
         this.clientName = clientName;
         
         /* TODO: initialize connection, sessions, consumer, producer, etc. */
         
-    	ActiveMQConnectionFactory clientCF = new ActiveMQConnectionFactory("tcp://localhost:61616");
-        Connection clientConnection = clientCF.createConnection();
+    	 clientCF = new ActiveMQConnectionFactory("tcp://localhost:61616");
+         clientConnection = clientCF.createConnection();
         clientConnection.start();
-        Session clientSession = clientConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+         clientSession = clientConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         
         registerQueue = clientSession.createQueue("registerQueue");
         registerProducer = clientSession.createProducer(registerQueue);
         
-        setInputQueue(this.clientName + "InputQueue");
-        setOutputQueue(this.clientName + "OutputQueue");
+        String tmp =  clientName + "InputQueue" ;
+        setInputQueue(tmp);
+        
+        tmp =  clientName + "OutputQueue" ; 
+        setOutputQueue(tmp);
         
     }
     //all receiving in the function can be synchronous
-    //
+ 
     
     //new function register: sends a message to the server with its name (this one should be done)
     public void register() throws JMSException {
@@ -78,33 +122,63 @@ public class JmsBrokerClient {
     	inputProducer.send(msg);
     }
     
+    /**
+     * ask for a list of all available stocks and all their info.
+     * @throws JMSException
+     */
     public void requestList() throws JMSException {
         //TODO
+    	RequestListMessage requestListMessage = new RequestListMessage(this.clientName);
+    	ObjectMessage msg = clientSession.createObjectMessage(requestListMessage);
+    	registerProducer.send(msg);
     }
     
     public void buy(String stockName, int amount) throws JMSException {
         //TODO
+    	BuyMessage buyMessage = new BuyMessage(stockName,amount);
+    	ObjectMessage msg = clientSession.createObjectMessage(buyMessage);
+    	registerProducer.send(msg);
     }
     
     public void sell(String stockName, int amount) throws JMSException {
         //TODO
+    	SellMessage sellMessage = new SellMessage(stockName,amount);
+    	ObjectMessage msg = clientSession.createObjectMessage(sellMessage);
+    	registerProducer.send(msg);
     }
     
     public void watch(String stockName) throws JMSException {	
     	createNewTopic(stockName);
+    	WatchMessage wm = new WatchMessage(this.clientName,stockName);
+    	ObjectMessage msg = clientSession.createObjectMessage(wm);
+    	inputProducer.send(msg);
     	//send message to server
     	
     }
     
     public void unwatch(String stockName) throws JMSException {
-        //TODO
+    	topicsTabelle.get(stockName).close();
+    	topicsTabelle.remove(stockName);
+    	UnWatchMessage uwm = new UnWatchMessage(this.clientName,stockName);
+    	ObjectMessage msg = clientSession.createObjectMessage(uwm);
+    	inputProducer.send(msg);
+    	
     }
     
     public void quit() throws JMSException {
         //TODO
+    	UnregisterMessage unregisterMessage = new UnregisterMessage(this.clientName);
+    	ObjectMessage msg = clientSession.createObjectMessage(unregisterMessage);
+    	inputProducer.send(msg);
+    	for (Stock stock : stocksList) {
+    		topicsTabelle.get(stock.getName()).close();
+		}
+    	
+    	
     }
     
     public void setInputQueue(String queueName) throws JMSException {
+    
       	inputQueue = clientSession.createQueue(queueName);
         inputProducer = clientSession.createProducer(inputQueue);
     }
@@ -112,12 +186,17 @@ public class JmsBrokerClient {
     public void setOutputQueue(String queueName) throws JMSException {
     	outputQueue = clientSession.createQueue(queueName);
         outputConsumer = clientSession.createConsumer(outputQueue);
+        outputConsumer.setMessageListener(listener);
     }
     
     public void createNewTopic(String topicName) throws JMSException {
         //TODO
     	Topic topic = clientSession.createTopic(topicName + "Topic");
     	MessageConsumer topicConsumer = clientSession.createConsumer(topic);
+    	
+	    topicsTabelle.put(topicName,topicConsumer);
+	    topicConsumer.setMessageListener(listener);
+    	
     }  
     
     /**
@@ -127,11 +206,12 @@ public class JmsBrokerClient {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             System.out.println("Enter the client name:");
-            String clientName = reader.readLine();
+            clientName = reader.readLine();
             
             JmsBrokerClient client = new JmsBrokerClient(clientName);
             
             boolean running = true;
+            client.requestList(); // to intialise sockets list
             while(running) {
                 System.out.println("Enter command:");
                 String[] task = reader.readLine().split(" ");
@@ -184,7 +264,5 @@ public class JmsBrokerClient {
         } catch (JMSException | IOException ex) {
             Logger.getLogger(JmsBrokerClient.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
     }
-    
 }
