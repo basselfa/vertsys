@@ -25,7 +25,10 @@ import de.tu_berlin.cit.vs.jms.common.RegisterMessage;
 import de.tu_berlin.cit.vs.jms.common.RequestListMessage;
 import de.tu_berlin.cit.vs.jms.common.SellMessage;
 import de.tu_berlin.cit.vs.jms.common.Stock;
+import de.tu_berlin.cit.vs.jms.common.UnWatchMessage;
 import de.tu_berlin.cit.vs.jms.common.UnregisterMessage;
+import de.tu_berlin.cit.vs.jms.common.WatchMessage;
+
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 /**
