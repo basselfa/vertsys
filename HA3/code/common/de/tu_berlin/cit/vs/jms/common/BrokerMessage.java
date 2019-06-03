@@ -18,6 +18,9 @@ public abstract class BrokerMessage implements Serializable {
         SYSTEM_REGISTER,		//send name of queues for client
         SYSTEM_UNREGISTER,
         SYSTEM_ERROR,
+        SYSTEM_WATCH,
+        SYSTEM_UNWATCH,
+        SYSTEM_UPDATEMESSAGE,
         
         STOCK_LIST,
         STOCK_BUY,
