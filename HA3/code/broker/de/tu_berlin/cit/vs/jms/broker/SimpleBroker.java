@@ -1,5 +1,6 @@
 package de.tu_berlin.cit.vs.jms.broker;
 
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +43,7 @@ public class SimpleBroker {
     private ConcurrentHashMap<String, MessageProducer> TopicsMap = new ConcurrentHashMap<String, MessageProducer>();
     private ConcurrentHashMap<String, MessageConsumer> InputQueueMap = new ConcurrentHashMap<String, MessageConsumer>();
     private ConcurrentHashMap<String, MessageProducer> OutputQueueMap = new ConcurrentHashMap<String, MessageProducer>();
+    private List<Stock> stocksList = new ArrayList<Stock>();
   
     
     private final MessageListener listener = new MessageListener() {
@@ -63,7 +65,9 @@ public class SimpleBroker {
 	   			   RegisterMessage rm = (RegisterMessage) msgParsed;
 	   			   String client = rm.getClientName();
 	   			   System.out.println("Received: " + client);
-	   			   InputQueueMap.put(client,brokerSession.createConsumer(brokerSession.createQueue(client+ "InputQueue")));
+	   			   MessageConsumer tmp = brokerSession.createConsumer(brokerSession.createQueue(client+ "InputQueue")) ; 
+	   			   tmp.setMessageListener(listener);
+	   			   InputQueueMap.put(client,tmp);
 	   			   OutputQueueMap.put(client,brokerSession.createProducer(brokerSession.createQueue(client + "OutputQueue")));
 	   			 
 	   			}
@@ -119,6 +123,7 @@ public class SimpleBroker {
         for(Stock stock : stockList) {
             /* TODO: prepare stocks as topics */
         	TopicsMap.put(stock.getName(),brokerSession.createProducer(brokerSession.createTopic(stock.getName())));
+        	stocksList.add(stock);
         }
      
     }
