@@ -58,6 +58,7 @@ public class JmsBrokerClient {
         public void onMessage(Message msg) {
             if(msg instanceof ObjectMessage) {
             	Object msgParsed = null;
+            	
 	   			 try 
 	   			 {
 	   			     msgParsed = ((ObjectMessage) msg).getObject();
@@ -71,12 +72,14 @@ public class JmsBrokerClient {
 	            {
 	   				ListMessage lm =  (ListMessage) msgParsed;
 	   				stocksList= lm.getStocks();
+	   				System.out.println("server sent ListMessage");
 	   			
 	   				
 	   			}
 	   			else if(msgParsed instanceof UpdatesMessage)
 	            { 
 	   				UpdatesMessage um = (UpdatesMessage) msgParsed ; 
+	   				System.out.println("server sent UpdatesMessage : "+ um.getUpdatesMessage()  );
 	   				
 	   			} 
             }
@@ -90,15 +93,19 @@ public class JmsBrokerClient {
         /* TODO: initialize connection, sessions, consumer, producer, etc. */
         
     	 clientCF = new ActiveMQConnectionFactory("tcp://localhost:61616");
+    	 clientCF.setTrustAllPackages(true);
          clientConnection = clientCF.createConnection();
         clientConnection.start();
          clientSession = clientConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
         
         registerQueue = clientSession.createQueue("registerQueue");
         registerProducer = clientSession.createProducer(registerQueue);
+        RegisterMessage mr = new RegisterMessage(clientName);
+        ObjectMessage msg = clientSession.createObjectMessage(mr);
+        registerProducer.send(msg);
         
         String tmp =  clientName + "InputQueue" ;
-        setInputQueue(tmp);
+         setInputQueue(tmp);
         
         tmp =  clientName + "OutputQueue" ; 
         setOutputQueue(tmp);
@@ -135,14 +142,14 @@ public class JmsBrokerClient {
     
     public void buy(String stockName, int amount) throws JMSException {
         //TODO
-    	BuyMessage buyMessage = new BuyMessage(stockName,amount);
+    	BuyMessage buyMessage = new BuyMessage(clientName ,stockName,amount);
     	ObjectMessage msg = clientSession.createObjectMessage(buyMessage);
     	registerProducer.send(msg);
     }
     
     public void sell(String stockName, int amount) throws JMSException {
         //TODO
-    	SellMessage sellMessage = new SellMessage(stockName,amount);
+    	SellMessage sellMessage = new SellMessage(clientName , stockName,amount);
     	ObjectMessage msg = clientSession.createObjectMessage(sellMessage);
     	registerProducer.send(msg);
     }
@@ -171,9 +178,15 @@ public class JmsBrokerClient {
     	ObjectMessage msg = clientSession.createObjectMessage(unregisterMessage);
     	inputProducer.send(msg);
     	for (Stock stock : stocksList) {
-    		topicsTabelle.get(stock.getName()).close();
+    		if ( topicsTabelle.get(stock.getName()) != null )
+    			topicsTabelle.get(stock.getName()).close();
 		}
-    	
+    	inputProducer.close();
+    	outputConsumer.close();
+    	registerProducer.close();
+        clientSession.close();
+        clientConnection.close();
+        
     	
     }
     
@@ -191,7 +204,7 @@ public class JmsBrokerClient {
     
     public void createNewTopic(String topicName) throws JMSException {
         //TODO
-    	Topic topic = clientSession.createTopic(topicName + "Topic");
+    	Topic topic = clientSession.createTopic(topicName);
     	MessageConsumer topicConsumer = clientSession.createConsumer(topic);
     	
 	    topicsTabelle.put(topicName,topicConsumer);
