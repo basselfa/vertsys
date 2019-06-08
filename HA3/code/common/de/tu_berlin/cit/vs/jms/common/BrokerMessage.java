@@ -21,6 +21,7 @@ public abstract class BrokerMessage implements Serializable {
         SYSTEM_WATCH,
         SYSTEM_UNWATCH,
         SYSTEM_UPDATEMESSAGE,
+        SYSTEM_REQUEST_LIST,
         
         STOCK_LIST,
         STOCK_BUY,

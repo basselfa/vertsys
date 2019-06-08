@@ -7,7 +7,7 @@ public class UnWatchMessage extends BrokerMessage {
 	   private String topicName;
 	    
 	    public UnWatchMessage(String clientName,String topicName) {
-	        super(Type.SYSTEM_REGISTER);
+	        super(Type.SYSTEM_UNWATCH);
 	        
 	        this.clientName = clientName;
 	        this.topicName = topicName;

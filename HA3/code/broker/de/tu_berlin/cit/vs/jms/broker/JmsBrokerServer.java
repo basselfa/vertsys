@@ -12,9 +12,9 @@ public class JmsBrokerServer {
     public static void main(String[] args) {
         try {
             List<Stock> stocks = new ArrayList<>();
-            stocks.add(new Stock("BARSCH", 200, 2.0));	//TODO: set three stocks barsch  guppy
-            stocks.add(new Stock("FLUNDER", 300, 1.0));
-            stocks.add(new Stock("GUPPY", 300, 1.0));
+            stocks.add(new Stock("B", 200, 2.0));	//TODO: set three stocks barsch  guppy
+            stocks.add(new Stock("F", 300, 1.0));
+            stocks.add(new Stock("G", 300, 1.0));
             
             SimpleBroker broker = new SimpleBroker(stocks);
            

@@ -32,9 +32,9 @@ public class Stock implements Serializable {
         this.stockCount = stockCount;
     }
 
-    public int getAvailableCount() {
-        return availableCount;
-    }
+	public int getAvailableCount() {
+	        return availableCount;
+	    }
 
     public void setAvailableCount(int availableCount) {
         this.availableCount = availableCount;

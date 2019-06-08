@@ -6,8 +6,8 @@ public class WatchMessage extends BrokerMessage {
 	   private String clientName;
 	   private String topicName;
 	    
-	    public WatchMessage(String clientName) {
-	        super(Type.SYSTEM_REGISTER);
+	    public WatchMessage(String clientName,String topicName) {
+	        super(Type.SYSTEM_WATCH);
 	        
 	        this.clientName = clientName;
 	        this.topicName = topicName;
