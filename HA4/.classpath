@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="callCenterSystem"/>
+	<classpathentry kind="src" path="webOrderSystem"/>
+	<classpathentry kind="src" path="common"/>
+	<classpathentry kind="src" path="camelmain"/>
+	<classpathentry kind="src" path="billingSystem"/>
+	<classpathentry kind="src" path="inventorySystem"/>
+	<classpathentry kind="src" path="resultSystem"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/activemq-all-5.13.3.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/activemq-camel-5.13.3.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/camel-core-2.16.3.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/camel-jms-2.16.3.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/camel-spring-2.16.3.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/camel-stream-2.16.3.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/commons-pool2-2.4.2.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/slf4j-api-1.6.6.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/spring-beans-4.3.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="/Users/ferielamira/Desktop/SS19/VS/Material Aufgabe 4-20190603/Example_libs/spring-context-4.3.0.RELEASE.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
