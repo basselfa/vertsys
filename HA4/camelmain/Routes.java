@@ -52,33 +52,26 @@ public class Routes {
         public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
            
         	 if (oldExchange == null) {
-         		
-                     return newExchange;
-         		 }
-         		 
-         		 else {	
-         			 Boolean inv, bill;
-         					
-         					Order oldOrder = (Order)oldExchange.getIn().getBody();
-         					Order newOrder = (Order)newExchange.getIn().getBody();
-         					System.out.println("oldorderID: "+ oldOrder.getOrderID());
-         					System.out.println("neworderID: "+ newOrder.getOrderID());
-         					if(	oldOrder.getValid().equals("true") && newOrder.getValid().equals("true") ) {
-         						
-         							System.out.println("order was considered valid");
-         							oldExchange.getIn().setHeader("validationResult", true);
-         						
-         							}
-         					
-                 					else { 
-                 						System.out.println("order was NOT considered valid");
-                 						oldExchange.getIn().setHeader("validationResult", false);
-                 					
-                 					}
-         					
-         					
-         					return oldExchange ;
-         		 }
+                 return newExchange;
+     		 }
+     		 
+     		 else {	
+     			 Boolean inv, bill;
+     			 
+     			 Order oldOrder = (Order)oldExchange.getIn().getBody();
+     			 Order newOrder = (Order)newExchange.getIn().getBody();
+     			 System.out.println("oldorderID: "+ oldOrder.getOrderID());
+     			 System.out.println("neworderID: "+ newOrder.getOrderID());
+     			 if(	oldOrder.getValid().equals("true") && newOrder.getValid().equals("true") ) {
+     				 System.out.println("order was considered valid");
+     				 oldExchange.getIn().setHeader("validationResult", true);
+     			 }
+     			 else { 
+     				 System.out.println("order was NOT considered valid");
+     				 oldExchange.getIn().setHeader("validationResult", false);
+     			 }
+     			 return oldExchange ;
+     		 }
            
         }
     }
@@ -100,9 +93,14 @@ public class Routes {
             	 
                    .split(body().tokenize("\n"))
                    //ADAPTER/TRANSLATOR
-                   .process(AdapterTranslator)
+//                   .process(AdapterTranslator)
+                   .enrich("direct:gtfoofmyroomimplayingminecraft", aggregationStrategy)
                    //TO DO: CONTENT ENRICHER -> ADD total num items AND OrderID
                    .to("activemq:topic:ORDER");	//PUB&SUB
+            	   
+            	   from("direct:gtfoofmyroomimplayingminecraft")
+            	   .process(AdapterTranslator);
+            	   
             	   
             	   //WebOrderSystem -> ENDPOINT
             	   //BillingSystem and InventorySytem -> POINT2POINT
