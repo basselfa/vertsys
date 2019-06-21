@@ -14,6 +14,9 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.UUID;
 
+import java.security.SecureRandom;
+
+
 public class Routes {
 	static int orderID=0; 
 	
@@ -35,14 +38,22 @@ public class Routes {
 
     };
 
-    
-//TO DO :enrich   
-    // sum number of total items and add it to the message 
-    // give an id to the order 
-    
-   
+    private static Processor WebAdapterTranslator = new Processor() {
+        @Override
+        public void process(Exchange exchange) throws Exception {
+            String[] parts = exchange.getIn().getBody(String.class).split(",");
+            String firstName = parts[0];
+            String lastName = parts[1];
+            String numberOfSurfboards = parts[2];
+            String numberOfDivingSuits = parts[3];
+            String customerID = parts[4];
 
+            orderID++;
+            
+            exchange.getOut().setBody(new Order(customerID, firstName, lastName, numberOfSurfboards, numberOfDivingSuits, Integer.toString(orderID)));
+        }
 
+    };
 
 
     public static class ResultAggregation implements AggregationStrategy {
@@ -75,6 +86,18 @@ public class Routes {
            
         }
     }
+    
+    
+    // if the code doesn't
+    public static class EnrichAggregation implements AggregationStrategy {
+        @Override
+        public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
+        	return newExchange;
+        }
+    }
+    
+    
+    
 
     public static void main(String[] args) throws Exception {
 //    	if(args.length == 0) {
@@ -89,28 +112,34 @@ public class Routes {
         RouteBuilder route = new RouteBuilder() {
             @Override
             public void configure() throws Exception {
+            	   //read call centre orders from file ->process->send to topic
             	   from("file:orders?noop=false")
             	 
                    .split(body().tokenize("\n"))
                    //ADAPTER/TRANSLATOR
-//                   .process(AdapterTranslator)
-                   .enrich("direct:gtfoofmyroomimplayingminecraft", aggregationStrategy)
+                   .enrich("direct:enrich", new EnrichAggregation())
                    //TO DO: CONTENT ENRICHER -> ADD total num items AND OrderID
                    .to("activemq:topic:ORDER");	//PUB&SUB
             	   
-            	   from("direct:gtfoofmyroomimplayingminecraft")
+            	   //reads webOrders from queue->send to topic
+            	   from("activemq:queue:webOrder")
+                   //ADAPTER/TRANSLATOR
+            	   .process(WebAdapterTranslator)
+                   //TO DO: CONTENT ENRICHER -> ADD total num items AND OrderID
+                   .to("activemq:topic:ORDER");	//PUB&SUB
+            	   
+            	   //enricher
+            	   from("direct:enrich")
             	   .process(AdapterTranslator);
             	   
-            	   
-            	   //WebOrderSystem -> ENDPOINT
-            	   //BillingSystem and InventorySytem -> POINT2POINT
-            	   
+            	   //read orders from bill and inv queue->send to result
             	   from("activemq:queue:BILL_INV_ORDER") 
             	   			//AGGREGATOR: sets validation result
 	                       .aggregate(header("JMSCorrelationID"),new ResultAggregation())
 	                       .completionSize(2)
 	                       .to("activemq:queue:RESULTORDER");
             	   
+            	   //read from result queue->appropriate list
             	   from("activemq:queue:FINISHEDORDER")
             	   		//CONTENT BASED ROUTER: differentiates between valid and unvalid results
             	   		.choice()
@@ -131,5 +160,14 @@ public class Routes {
         ctxt.start();
         System.in.read();
         ctxt.stop();
+    }
+    private String getID() {
+    	final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+    	final SecureRandom RANDOM = new SecureRandom();
+    	StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 15; ++i) {
+            sb.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
+        }
+        return sb.toString();    	
     }
 }

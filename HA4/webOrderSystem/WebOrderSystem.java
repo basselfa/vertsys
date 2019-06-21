@@ -7,6 +7,7 @@ import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
@@ -20,13 +21,33 @@ public class WebOrderSystem {
 	    
 	 
 	  
-
+	    //liest daten aus argumente
+    	//erstellt daraus einen string
+    	//schickt den string durch queue (newWebOrders) an routes
+    	// <First Name, Last Name, Number of ordered surfboards, Number of ordered diving suits, Customer-ID>
 	    public static void main(String[] args) {
-//	    	if(args.length == 0) {
-//				System.out.println("wrong arguments");
-//				return;
-//			}
-	        System.out.println("starting activemq");
+	    	
+	    	//check valit input
+	    	if (args.length != 5) {
+	    		System.out.println("wrong number of arguments.");
+    			return;
+	    	}
+	    	
+	    	for (int i=2 ; i <= args.length ; i++) {
+	    		if (!(args[i].matches("[0-9]+") && args[i].length() > 0)) {
+		    		System.out.println("wrong format for number inputs.");
+	    			return;
+	    		}
+	    	}
+	    	//generates string for new incoming order
+	        String newOrder = "";
+	        for(int i=0 ; i < args.length ; i++) {
+	        	newOrder = newOrder + args[i] + ",";
+	        }
+        	newOrder = newOrder + args[args.length];
+
+	        
+	    	//send string to routes for further processing
 	        try {
 	            ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();
 
@@ -36,33 +57,14 @@ public class WebOrderSystem {
 		        System.out.println(Session.AUTO_ACKNOWLEDGE);
 
 	            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	            Topic topic = session.createTopic("ORDER");
-	            MessageConsumer messageConsumer = session.createConsumer(topic);
-
-	         
-	            //ENDPOINT
-	            messageConsumer.setMessageListener(new MessageListener() {
-	                @Override
-	                public void onMessage(Message message) {
-	                    try {
-	               
-	                	  Order order = (Order) ((ObjectMessage) message).getObject();
-	                	  String orderString = order.getFirstName() +","+ order.getLastName() +","+ order.getNumberOfSurfboards() +","+ order.getNumberOfDivingSuits()+","+ order.getCustomerID();
-	                	  System.out.println(orderString);
-	                    } catch (JMSException e) {
-	                        e.printStackTrace();
-	                    }
-	                }
-	            });
-	                 
+	            Queue queue = session.createQueue("webOrder");
+	            MessageProducer messageProducer = session.createProducer(queue);
+	            TextMessage msg = session.createTextMessage(newOrder);
+	            messageProducer.send(msg);
 	          
 	            connection.start();
 	        } catch (JMSException e) {
 	            e.printStackTrace();
 	        }
 	    }
-
-	  
-	    
-
 }
