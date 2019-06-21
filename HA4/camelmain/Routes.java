@@ -84,6 +84,10 @@ public class Routes {
     }
 
     public static void main(String[] args) throws Exception {
+//    	if(args.length == 0) {
+//			System.out.println("wrong arguments");
+//			return;
+//		}
     	 DefaultCamelContext ctxt = new DefaultCamelContext();
          ActiveMQComponent activeMQComponent = ActiveMQComponent.activeMQComponent();
          activeMQComponent.setTrustAllPackages(true);

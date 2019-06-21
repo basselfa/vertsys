@@ -11,6 +11,10 @@ public class CallCenterOrderSystem {
 	
 	
     public static void main(String[] args) throws Exception {
+//    	if(args.length == 0) {
+//			System.out.println("wrong arguments");
+//			return;
+//		}
     	   Boolean counter=true;
     	   int numCreatedFiles=0;
     	   List<String> lines = Arrays.asList("1,Bib Test,0,1");

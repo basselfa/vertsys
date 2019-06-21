@@ -16,6 +16,11 @@ public class BillingSystem {
 	public static void main(String[] args) {
 		try {
             // Parse the string argument into an integer value.
+			
+			if(args.length == 0) {
+				System.out.println("wrong arguments");
+				return;
+			}
 	    	hashInp = Integer.parseInt(args[0]);
        
 		    ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();

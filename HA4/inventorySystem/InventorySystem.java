@@ -13,6 +13,10 @@ public class InventorySystem {
 	
 	public static void  main(String[] args) {
 	    try {
+	    	if(args.length == 0) {
+				System.out.println("wrong arguments");
+				return;
+			}
         // Parse the string argument into an integer value.
 	    totalNumberSurfboards = Integer.parseInt(args[0]);
 	    totalNumberDivingSuits = Integer.parseInt(args[1]);

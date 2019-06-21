@@ -9,6 +9,10 @@ public class ResultSystem {
 	 public static void main(String[] args)  {
 	       
 	        try {
+//	        	if(args.length == 0) {
+//					System.out.println("wrong arguments");
+//					return;
+//				}
 	            ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();
 	            
 	            conFactory.setTrustAllPackages(true);

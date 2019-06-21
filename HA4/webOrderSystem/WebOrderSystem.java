@@ -22,18 +22,23 @@ public class WebOrderSystem {
 	  
 
 	    public static void main(String[] args) {
+//	    	if(args.length == 0) {
+//				System.out.println("wrong arguments");
+//				return;
+//			}
 	        System.out.println("starting activemq");
 	        try {
 	            ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();
-	            
+
 	            conFactory.setTrustAllPackages(true);
 	          
 	            Connection connection = conFactory.createConnection();
-	           
+		        System.out.println(Session.AUTO_ACKNOWLEDGE);
+
 	            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 	            Topic topic = session.createTopic("ORDER");
 	            MessageConsumer messageConsumer = session.createConsumer(topic);
-	            
+
 	         
 	            //ENDPOINT
 	            messageConsumer.setMessageListener(new MessageListener() {
