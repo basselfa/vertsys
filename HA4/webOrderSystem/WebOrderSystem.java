@@ -33,7 +33,7 @@ public class WebOrderSystem {
     			return;
 	    	}
 	    	
-	    	for (int i=2 ; i <= args.length ; i++) {
+	    	for (int i=2 ; i < args.length ; i++) {
 	    		if (!(args[i].matches("[0-9]+") && args[i].length() > 0)) {
 		    		System.out.println("wrong format for number inputs.");
 	    			return;
@@ -44,7 +44,7 @@ public class WebOrderSystem {
 	        for(int i=0 ; i < args.length ; i++) {
 	        	newOrder = newOrder + args[i] + ",";
 	        }
-        	newOrder = newOrder + args[args.length];
+        	newOrder = newOrder + args[args.length -1];
 
 	        
 	    	//send string to routes for further processing
