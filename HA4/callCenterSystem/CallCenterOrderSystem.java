@@ -5,16 +5,14 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
- 
+
+/**this class creates orders and stores the in files
+ *String format: <Customer-ID, Full Name, Number of ordered surfboards, Number of ordered diving suits>*/
 
 public class CallCenterOrderSystem {
 	
-	
     public static void main(String[] args) throws Exception {
-//    	if(args.length == 0) {
-//			System.out.println("wrong arguments");
-//			return;
-//		}
+    	
     	   Boolean counter=true;
     	   int numCreatedFiles=0;
     	   List<String> lines = Arrays.asList("1,Bib Test,0,1");
@@ -31,15 +29,10 @@ public class CallCenterOrderSystem {
 	        	   		counter=true;}
 	               System.out.println("New Order created");
 	               Thread.sleep(10000);
-	            
-	         
-	               
+	             
 	           }catch (Exception e){
 	               System.out.println(e.toString());
 	           }
     	   }
-     
-      
-    }
-
+         }
 }

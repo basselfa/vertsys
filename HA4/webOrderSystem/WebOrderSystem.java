@@ -11,6 +11,11 @@ import javax.jms.TextMessage;
 import javax.jms.Topic;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
+/**1.liest daten aus argumente
+  2.erstellt daraus einen string
+  3.schickt den string durch queue (newWebOrders) an routes
+  String format: <First Name, Last Name, Number of ordered surfboards, Number of ordered diving suits, Customer-ID>*/
+
 public class WebOrderSystem {
 	  	private Connection connection;
 	    private Queue inQueue;
@@ -19,12 +24,6 @@ public class WebOrderSystem {
 	    private MessageProducer messageProducer;
 	    private MessageConsumer messageConsumer;
 	    
-	 
-	  
-	    //liest daten aus argumente
-    	//erstellt daraus einen string
-    	//schickt den string durch queue (newWebOrders) an routes
-    	// <First Name, Last Name, Number of ordered surfboards, Number of ordered diving suits, Customer-ID>
 	    public static void main(String[] args) {
 	    	
 	    	//check valit input
@@ -46,7 +45,6 @@ public class WebOrderSystem {
 	        }
         	newOrder = newOrder + args[args.length -1];
 
-	        
 	    	//send string to routes for further processing
 	        try {
 	            ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();

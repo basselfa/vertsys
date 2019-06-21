@@ -1,5 +1,8 @@
 import java.io.Serializable;
 
+/**this class represents the final order structure
+ * this structure is being send trough the topic*/
+
 public class Order implements Serializable {
     private String customerID;
     private String firstName;
@@ -21,8 +24,6 @@ public class Order implements Serializable {
         this.numberOfDivingSuits = numberOfDivingSuits;
     }
 
-
-
     public Order(String customerID, String firstName, String lastName, String overallItems, String numberOfSurfboards, String numberOfDivingSuits, String orderID, String valid, String validationResult) {
         this.customerID = customerID;
         this.firstName = firstName;
@@ -34,7 +35,6 @@ public class Order implements Serializable {
         this.valid = valid;
         this.validationResult = validationResult;
     }
-
 
     @Override
     public String toString() {
@@ -61,8 +61,7 @@ public class Order implements Serializable {
 
     public String getLastName() {
         return lastName;
-    }
-    
+    } 
    
     public String getOverallItems() {
         return overallItems;
@@ -79,7 +78,6 @@ public class Order implements Serializable {
     public String getValid() {
         return valid;
     }
-   
 
     public String getValidationResult() {
         return validationResult;
