@@ -1,6 +1,6 @@
-
-
 import javax.jms.*;
+
+/**this clas also does stuff too*/
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
@@ -13,10 +13,11 @@ public class InventorySystem {
 	
 	public static void  main(String[] args) {
 	    try {
-	    	if(args.length == 0) {
-				System.out.println("wrong arguments");
-				return;
-			}
+		//checking right number of arguments
+	   	if(args.length == 0) {
+			System.out.println("wrong arguments");
+			return;
+		}
         // Parse the string argument into an integer value.
 	    totalNumberSurfboards = Integer.parseInt(args[0]);
 	    totalNumberDivingSuits = Integer.parseInt(args[1]);
@@ -53,12 +54,9 @@ public class InventorySystem {
 		} catch (JMSException | NumberFormatException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
-		}
-             
+		}     
 	}
 
-	
-	
 	public static String setOrderValidity(Order order) {
 		numberOrderedDivingSuits= Integer.parseInt(order.getNumberOfDivingSuits());
 		numberOrderedSurfboards=Integer.parseInt(order.getNumberOfSurfboards());
@@ -68,18 +66,10 @@ public class InventorySystem {
 			order.setValid("true");
 			totalNumberSurfboards = totalNumberSurfboards - numberOrderedSurfboards;
 			totalNumberDivingSuits =totalNumberDivingSuits - numberOrderedDivingSuits;
-		
 		}
 		else {
-			
 			order.setValid("false");
-		
 		}
 		return order.getValid();
-		
 	}
-
 }
-
-
-

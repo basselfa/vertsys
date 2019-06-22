@@ -1,18 +1,11 @@
-
-
 import javax.jms.*;
-
-
 import org.apache.activemq.ActiveMQConnectionFactory;
 
+/**this class does stuff too(please enter better description)*/
+
 public class ResultSystem {
-	 public static void main(String[] args)  {
-	       
+	 public static void main(String[] args)  {       
 	        try {
-//	        	if(args.length == 0) {
-//					System.out.println("wrong arguments");
-//					return;
-//				}
 	            ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();
 	            
 	            conFactory.setTrustAllPackages(true);
@@ -40,7 +33,6 @@ public class ResultSystem {
 	                    else if(message.getBooleanProperty("validationResult")==false) {
 	                    	order.setValidResult("false");
 	                    	System.out.print("NEW INVALID ORDER:");
-	                    	
 	                    }
 	                	  String orderString = "First Name: "+order.getFirstName() +", Last Name: "+ order.getLastName() +",Number Surfboards: "+ order.getNumberOfSurfboards() +",Number DivingSuits: "+ order.getNumberOfDivingSuits()+", TotalNumber: "+order.getOverallItems()+",OrderID: "+order.getOrderID()+",CustomerID: "+ order.getCustomerID();
 	              
@@ -54,12 +46,10 @@ public class ResultSystem {
 	                    }
 	                }
 	            });
-	                 
 	          
 	            connection.start();
 	        } catch (JMSException e) {
 	            e.printStackTrace();
 	        }
 	    }
-
 }

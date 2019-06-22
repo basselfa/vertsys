@@ -1,7 +1,7 @@
-
-
 import javax.jms.*;
 import org.apache.activemq.ActiveMQConnectionFactory;
+
+/**this class does stuff too*/
 
 public class BillingSystem {
 
@@ -10,17 +10,15 @@ public class BillingSystem {
 	private final static int someNumberE = 13;
 	private final static int failPercent = 5;
 	private static int hashInp; 
-	
 
-	
 	public static void main(String[] args) {
-		try {
-            // Parse the string argument into an integer value.
-			
+		try {	
+			//checking right number of arguments
 			if(args.length == 0) {
 				System.out.println("wrong arguments");
 				return;
 			}
+            // Parse the string argument into an integer value.
 	    	hashInp = Integer.parseInt(args[0]);
        
 		    ActiveMQConnectionFactory conFactory = new ActiveMQConnectionFactory();
@@ -51,7 +49,6 @@ public class BillingSystem {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-	           
 	            } 
 	        });
 	        
@@ -65,9 +62,6 @@ public class BillingSystem {
 	public static boolean hash(int inputInt) {
 		return (((inputInt^someNumberE) %(firstPrime * secondPrime) << 7) % 100  > failPercent) ? true : false;
 	}
-	
-
-	
 	
 	public static void test() {
 		int pos = 0;
@@ -83,5 +77,4 @@ public class BillingSystem {
 		}
 		System.out.println("pos: " + pos + ", neg: " + neg);
 	}
-
 }

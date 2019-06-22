@@ -5,8 +5,6 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.processor.aggregate.AggregationStrategy;
 
-
-
 import javax.jms.JMSException;
 import javax.jms.ObjectMessage;
 
@@ -16,11 +14,14 @@ import java.util.UUID;
 
 import java.security.SecureRandom;
 
+/**this class describes the connection between the queues and topics
+ *also enricher, message translator and aggregator*/
 
 public class Routes {
 	static int orderID=0; 
 	
-    private static Processor AdapterTranslator = new Processor() {
+	//creates new order with data from call center message
+    private static Processor callAdapterTranslator = new Processor() {
         @Override
         public void process(Exchange exchange) throws Exception {
             String[] parts = exchange.getIn().getBody(String.class).split(",");
@@ -35,9 +36,9 @@ public class Routes {
   
             exchange.getOut().setBody(new Order(customerID, firstName, lastName, numberOfSurfboards, numberOfDivingSuits, Integer.toString(orderID)));
         }
-
     };
 
+	//creates new order with data from web message
     private static Processor WebAdapterTranslator = new Processor() {
         @Override
         public void process(Exchange exchange) throws Exception {
@@ -47,24 +48,18 @@ public class Routes {
             String numberOfSurfboards = parts[2];
             String numberOfDivingSuits = parts[3];
             String customerID = parts[4];
-
             orderID++;
             
             exchange.getOut().setBody(new Order(customerID, firstName, lastName, numberOfSurfboards, numberOfDivingSuits, Integer.toString(orderID)));
         }
-
     };
 
-
     public static class ResultAggregation implements AggregationStrategy {
-
 
         @Override
         public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
            
-        	 if (oldExchange == null) {
-                 return newExchange;
-     		 }
+        	 if (oldExchange == null) {return newExchange;}
      		 
      		 else {	
      			 Boolean inv, bill;
@@ -82,12 +77,10 @@ public class Routes {
      				 oldExchange.getIn().setHeader("validationResult", false);
      			 }
      			 return oldExchange ;
-     		 }
-           
+     		 }         
         }
     }
-    
-    
+  
     // if the code doesn't
     public static class EnrichAggregation implements AggregationStrategy {
         @Override
@@ -95,15 +88,9 @@ public class Routes {
         	return newExchange;
         }
     }
-    
-    
-    
 
     public static void main(String[] args) throws Exception {
-//    	if(args.length == 0) {
-//			System.out.println("wrong arguments");
-//			return;
-//		}
+
     	 DefaultCamelContext ctxt = new DefaultCamelContext();
          ActiveMQComponent activeMQComponent = ActiveMQComponent.activeMQComponent();
          activeMQComponent.setTrustAllPackages(true);
@@ -130,7 +117,7 @@ public class Routes {
             	   
             	   //enricher
             	   from("direct:enrich")
-            	   .process(AdapterTranslator);
+            	   .process(callAdapterTranslator);
             	   
             	   //read orders from bill and inv queue->send to result
             	   from("activemq:queue:BILL_INV_ORDER") 
@@ -150,8 +137,6 @@ public class Routes {
             	   			.log("the Order is not valid")
             	   			.to("file:unvalidOrders?noop=false")
             	   .end();
-  
-            	   
             }
         };
 
@@ -160,14 +145,5 @@ public class Routes {
         ctxt.start();
         System.in.read();
         ctxt.stop();
-    }
-    private String getID() {
-    	final String ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
-    	final SecureRandom RANDOM = new SecureRandom();
-    	StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 15; ++i) {
-            sb.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
-        }
-        return sb.toString();    	
     }
 }
